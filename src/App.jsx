@@ -25,9 +25,7 @@ import {
   Cake,
   DollarSign,
   Check,
-  AlertCircle,
-  FileText,
-  Eye
+  AlertCircle
 } from 'lucide-react';
 
 const INITIAL_MEMBERS = [
@@ -52,7 +50,6 @@ const INITIAL_EXERCISES = [
 ];
 
 const INITIAL_PLANS = {
-  // Ej: { "38123456": { day1: [{exerciseId: 1, series: '4 x 10'}], day2: [...] } }
   "38123456": {
     day1: [
       { exerciseId: 1, series: '4 x 10' },
@@ -83,8 +80,42 @@ const MONTHS = [
 
 const ExerciseVisual = ({ type }) => {
   return (
-    <div className="w-16 h-16 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 shadow-xs">
-      <Dumbbell size={28} className="animate-pulse" />
+    <div className="w-16 h-16 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 shadow-xs relative overflow-hidden group">
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex items-center justify-center">
+        {type === 'bench' && (
+          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12h16M6 12v5M18 12v5M2 9h20M7 7h10"/></svg>
+        )}
+        {type === 'chest' && (
+          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+        )}
+        {type === 'squat' && (
+          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 4h12M9 4v16M15 4v16M5 10h14"/></svg>
+        )}
+        {type === 'deadlift' && (
+          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 18h20M5 18V9M19 18V9M8 6h8"/></svg>
+        )}
+        {type === 'pullup' && (
+          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 5h18M7 5v12a2 2 0 002 2h6a2 2 0 002-2V5"/></svg>
+        )}
+        {type === 'row' && (
+          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1M6 9h12"/></svg>
+        )}
+        {type === 'shoulder' && (
+          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21v-4a6.5 6.5 0 0113 0v4"/></svg>
+        )}
+        {type === 'biceps' && (
+          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 15l6-6 6 6M12 9v11"/></svg>
+        )}
+        {type === 'triceps' && (
+          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v18M8 7h8"/></svg>
+        )}
+        {type === 'lateral' && (
+          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 12h20M12 2v20"/></svg>
+        )}
+        {(!type || type === 'default') && (
+          <Dumbbell size={28} className="animate-pulse text-indigo-600" />
+        )}
+      </div>
     </div>
   );
 };
@@ -190,7 +221,7 @@ const DashboardView = ({ members, ledger }) => {
   );
 };
 
-const MembersView = ({ members, setMembers }) => {
+const MembersView = ({ members, setMembers, currentUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingMemberId, setEditingMemberId] = useState(null);
@@ -212,6 +243,7 @@ const MembersView = ({ members, setMembers }) => {
   );
 
   const handleOpenAdd = () => {
+    if (currentUser.role !== 'admin') return;
     setEditingMemberId(null);
     setMemberForm({
       firstName: '',
@@ -226,6 +258,7 @@ const MembersView = ({ members, setMembers }) => {
   };
 
   const handleOpenEdit = (member) => {
+    if (currentUser.role !== 'admin') return;
     setEditingMemberId(member.id);
     setMemberForm({
       firstName: member.firstName,
@@ -241,6 +274,7 @@ const MembersView = ({ members, setMembers }) => {
 
   const handleSaveMember = (e) => {
     e.preventDefault();
+    if (currentUser.role !== 'admin') return;
     
     if (editingMemberId) {
       setMembers(members.map(m => m.id === editingMemberId ? { ...m, ...memberForm } : m));
@@ -261,37 +295,54 @@ const MembersView = ({ members, setMembers }) => {
   };
 
   const handleDelete = (id) => {
+    if (currentUser.role !== 'admin') return;
     if(window.confirm('¿Estás seguro de eliminar este socio?')) {
       setMembers(members.filter(m => m.id !== id));
     }
   };
 
+  // Si es socio regular, solo ve su propia ficha
+  const displayMembers = currentUser.role === 'admin' 
+    ? filteredMembers 
+    : members.filter(m => m.dni === currentUser.dni);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-gray-800">Gestión de Socios (ABM)</h2>
-        <button 
-          onClick={handleOpenAdd}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium w-full sm:w-auto justify-center"
-        >
-          <UserPlus size={18} />
-          Dar de Alta Socio
-        </button>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">
+            {currentUser.role === 'admin' ? 'Gestión de Socios (ABM)' : 'Mis Datos de Socio'}
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {currentUser.role === 'admin' ? 'Administra altas, modificaciones y credenciales de acceso.' : 'Consulta tu información de registro.'}
+          </p>
+        </div>
+        {currentUser.role === 'admin' && (
+          <button 
+            onClick={handleOpenAdd}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium w-full sm:w-auto justify-center"
+          >
+            <UserPlus size={18} />
+            Dar de Alta Socio
+          </button>
+        )}
       </div>
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-4 justify-between items-center bg-gray-50/50">
-          <div className="relative w-full sm:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Buscar por nombre, apellido o DNI..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
-            />
+        {currentUser.role === 'admin' && (
+          <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-4 justify-between items-center bg-gray-50/50">
+            <div className="relative w-full sm:w-96">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input 
+                type="text" 
+                placeholder="Buscar por nombre, apellido o DNI..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-gray-600">
@@ -301,11 +352,11 @@ const MembersView = ({ members, setMembers }) => {
                 <th className="px-6 py-4">DNI / Contacto</th>
                 <th className="px-6 py-4">Fecha Ingreso / Cumpleaños</th>
                 <th className="px-6 py-4">Estado</th>
-                <th className="px-6 py-4 text-right">Acciones</th>
+                {currentUser.role === 'admin' && <th className="px-6 py-4 text-right">Acciones</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredMembers.map((member) => {
+              {displayMembers.map((member) => {
                 const phoneClean = member.phone ? member.phone.replace(/\D/g, '') : '';
                 const last4 = phoneClean.length >= 4 ? phoneClean.slice(-4) : '????';
                 return (
@@ -338,24 +389,26 @@ const MembersView = ({ members, setMembers }) => {
                         {member.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button 
-                          title="Modificar socio"
-                          onClick={() => handleOpenEdit(member)}
-                          className="p-1.5 text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button 
-                          title="Eliminar socio"
-                          onClick={() => handleDelete(member.id)}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
+                    {currentUser.role === 'admin' && (
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button 
+                            title="Modificar socio"
+                            onClick={() => handleOpenEdit(member)}
+                            className="p-1.5 text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button 
+                            title="Eliminar socio"
+                            onClick={() => handleDelete(member.id)}
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
@@ -364,7 +417,7 @@ const MembersView = ({ members, setMembers }) => {
         </div>
       </div>
 
-      {showAddModal && (
+      {showAddModal && currentUser.role === 'admin' && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
             <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-indigo-50">
@@ -435,7 +488,12 @@ const MembersView = ({ members, setMembers }) => {
 
 const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const initialMemberId = currentUser.role === 'admin' ? (members[0]?.id || '') : (members.find(m => m.dni === currentUser.dni)?.id || members[0]?.id || '');
+  
+  // Si es socio, fuerza su propio ID. Si es admin, permite seleccionar.
+  const initialMemberId = currentUser.role === 'admin' 
+    ? (members[0]?.id || '') 
+    : (members.find(m => m.dni === currentUser.dni)?.id || members[0]?.id || '');
+    
   const [selectedMemberId, setSelectedMemberId] = useState(initialMemberId);
 
   const [showNovedadModal, setShowNovedadModal] = useState(false);
@@ -446,7 +504,12 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
     note: ''
   });
 
-  const selectedMember = members.find(m => m.id === Number(selectedMemberId)) || members[0];
+  // Si es miembro, aseguramos que siempre examine su propio registro
+  const effectiveMemberId = currentUser.role === 'admin' 
+    ? selectedMemberId 
+    : (members.find(m => m.dni === currentUser.dni)?.id || selectedMemberId);
+
+  const selectedMember = members.find(m => m.id === Number(effectiveMemberId)) || members[0];
 
   const getCalculatedMonthStatus = (member, year, monthNumber) => {
     if (!member || !member.joinDate) return { status: 'pendiente', amount: 30000, note: '' };
@@ -472,7 +535,6 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
     return { status: 'pendiente', amount: 30000, note: '' };
   };
 
-  // Resumen: Solo Deuda Acumulada
   const totalOwed = useMemo(() => {
     if (!selectedMember) return 0;
     let owed = 0;
@@ -486,6 +548,7 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
   }, [selectedMember, selectedYear, ledger]);
 
   const handleOpenNovedad = (month) => {
+    if (currentUser.role !== 'admin') return;
     setActiveMonthForNovedad(month);
     const current = getCalculatedMonthStatus(selectedMember, selectedYear, month.number);
     
@@ -499,7 +562,7 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
 
   const handleSaveNovedad = (e) => {
     e.preventDefault();
-    if (!activeMonthForNovedad || !selectedMember) return;
+    if (currentUser.role !== 'admin' || !activeMonthForNovedad || !selectedMember) return;
 
     const ledgerKey = `${selectedMember.id}-${selectedYear}-${activeMonthForNovedad.number}`;
     const updatedLedger = {
@@ -518,8 +581,10 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Cuenta Corriente - Calendario Anual</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Control de cuotas mensuales, pagos y novedades por socio.</p>
+          <h2 className="text-2xl font-bold text-gray-800">
+            {currentUser.role === 'admin' ? 'Cuenta Corriente - Calendario Anual' : 'Mi Cuenta Corriente'}
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">Control de cuotas mensuales y estado financiero.</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -578,7 +643,7 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
                 </div>
               </div>
 
-              {/* Resumen de Cuenta Corriente: Solo Deuda Acumulada */}
+              {/* Resumen de Deuda Acumulada */}
               <div className="bg-red-50 border border-red-200 p-4 rounded-xl flex items-center justify-between">
                 <div>
                   <p className="text-xs text-red-600 font-semibold uppercase tracking-wider">Deuda Acumulada Total ({selectedYear})</p>
@@ -723,21 +788,22 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
 
 const ExercisesView = ({ exercises, setExercises, currentUser }) => {
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newEx, setNewEx] = useState({ name: '', muscle: '', description: '' });
+  const [newEx, setNewEx] = useState({ name: '', muscle: '', description: '', iconType: 'bench' });
 
   const handleAdd = (e) => {
     e.preventDefault();
+    if (currentUser.role !== 'admin') return;
     const item = {
       id: exercises.length > 0 ? Math.max(...exercises.map(e => e.id)) + 1 : 1,
-      ...newEx,
-      iconType: 'default'
+      ...newEx
     };
     setExercises([...exercises, item]);
     setShowAddModal(false);
-    setNewEx({ name: '', muscle: '', description: '' });
+    setNewEx({ name: '', muscle: '', description: '', iconType: 'bench' });
   };
 
   const handleDelete = (id) => {
+    if (currentUser.role !== 'admin') return;
     if (window.confirm('¿Eliminar este ejercicio de la base de datos?')) {
       setExercises(exercises.filter(e => e.id !== id));
     }
@@ -748,7 +814,7 @@ const ExercisesView = ({ exercises, setExercises, currentUser }) => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Base de Ejercicios de Musculación</h2>
-          <p className="text-sm text-gray-500">Ejercicios básicos disponibles para armar las rutinas de los socios.</p>
+          <p className="text-sm text-gray-500">Ejercicios básicos disponibles con esquema visual para orientar al socio.</p>
         </div>
         {currentUser.role === 'admin' && (
           <button 
@@ -803,6 +869,21 @@ const ExercisesView = ({ exercises, setExercises, currentUser }) => {
                 <input required type="text" placeholder="Ej: Pecho / Hombros" value={newEx.muscle} onChange={e => setNewEx({...newEx, muscle: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Esquema Visual</label>
+                <select value={newEx.iconType} onChange={e => setNewEx({...newEx, iconType: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                  <option value="bench">Press / Banca</option>
+                  <option value="chest">Pecho / Apertura</option>
+                  <option value="squat">Sentadilla / Piernas</option>
+                  <option value="deadlift">Peso Muerto</option>
+                  <option value="pullup">Dominadas / Tracción</option>
+                  <option value="row">Remo</option>
+                  <option value="shoulder">Hombros</option>
+                  <option value="biceps">Bíceps</option>
+                  <option value="triceps">Tríceps</option>
+                  <option value="lateral">Elevaciones Laterales</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Descripción / Técnica</label>
                 <textarea required placeholder="Breve descripción de ejecución..." value={newEx.description} onChange={e => setNewEx({...newEx, description: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" rows={3}></textarea>
               </div>
@@ -819,22 +900,21 @@ const ExercisesView = ({ exercises, setExercises, currentUser }) => {
 };
 
 const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
-  // Selector de socio (admin) o socio actual
   const initialDni = currentUser.role === 'admin' ? (members[0]?.dni || '') : currentUser.dni;
   const [selectedDni, setSelectedDni] = useState(initialDni);
 
-  // Modal para agregar ejercicio a Día 1 o Día 2
   const [showAddExModal, setShowAddExModal] = useState(false);
-  const [targetDay, setTargetDay] = useState('day1'); // 'day1' | 'day2'
+  const [targetDay, setTargetDay] = useState('day1');
   const [selectedExId, setSelectedExId] = useState(exercises[0]?.id || 1);
   const [seriesReps, setSeriesReps] = useState('4 x 10');
 
-  const selectedMember = members.find(m => m.dni === selectedDni) || members[0];
-  const currentMemberPlan = plans[selectedDni] || { day1: [], day2: [] };
+  const effectiveDni = currentUser.role === 'admin' ? selectedDni : currentUser.dni;
+  const selectedMember = members.find(m => m.dni === effectiveDni) || members[0];
+  const currentMemberPlan = plans[effectiveDni] || { day1: [], day2: [] };
 
   const handleAddExerciseToPlan = (e) => {
     e.preventDefault();
-    if (!selectedMember) return;
+    if (currentUser.role !== 'admin' || !selectedMember) return;
 
     const dni = selectedMember.dni;
     const memberPlan = plans[dni] ? { ...plans[dni] } : { day1: [], day2: [] };
@@ -852,7 +932,7 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
   };
 
   const handleRemoveExercise = (day, index) => {
-    if (!selectedMember) return;
+    if (currentUser.role !== 'admin' || !selectedMember) return;
     const dni = selectedMember.dni;
     const memberPlan = { ...plans[dni] };
     if (day === 'day1') {
@@ -940,11 +1020,11 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
                       
                       {currentMemberPlan.day1?.length > 0 ? (
                         currentMemberPlan.day1.map((item, idx) => {
-                          const exInfo = exercises.find(e => e.id === item.exerciseId) || { name: 'Ejercicio eliminado', muscle: 'N/A' };
+                          const exInfo = exercises.find(e => e.id === item.exerciseId) || { name: 'Ejercicio eliminado', muscle: 'N/A', iconType: 'default' };
                           return (
                             <div key={idx} className="bg-white p-3 rounded-lg border border-gray-200 flex items-center justify-between shadow-xs">
                               <div className="flex items-center gap-3">
-                                <ExerciseVisual />
+                                <ExerciseVisual type={exInfo.iconType} />
                                 <div>
                                   <p className="font-bold text-gray-800 text-sm">{exInfo.name}</p>
                                   <p className="text-[11px] text-gray-500">Músculo: <span className="text-indigo-600 font-medium">{exInfo.muscle}</span></p>
@@ -988,11 +1068,11 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
                       
                       {currentMemberPlan.day2?.length > 0 ? (
                         currentMemberPlan.day2.map((item, idx) => {
-                          const exInfo = exercises.find(e => e.id === item.exerciseId) || { name: 'Ejercicio eliminado', muscle: 'N/A' };
+                          const exInfo = exercises.find(e => e.id === item.exerciseId) || { name: 'Ejercicio eliminado', muscle: 'N/A', iconType: 'default' };
                           return (
                             <div key={idx} className="bg-white p-3 rounded-lg border border-gray-200 flex items-center justify-between shadow-xs">
                               <div className="flex items-center gap-3">
-                                <ExerciseVisual />
+                                <ExerciseVisual type={exInfo.iconType} />
                                 <div>
                                   <p className="font-bold text-gray-800 text-sm">{exInfo.name}</p>
                                   <p className="text-[11px] text-gray-500">Músculo: <span className="text-indigo-600 font-medium">{exInfo.muscle}</span></p>
@@ -1326,7 +1406,7 @@ export default function App() {
 
   const allNavItems = [
     { id: 'dashboard', label: 'Panel', icon: LayoutDashboard, roles: ['admin', 'member'] },
-    { id: 'members', label: 'Gestión de Socios', icon: Users, roles: ['admin'] },
+    { id: 'members', label: 'Gestión de Socios', icon: Users, roles: ['admin', 'member'] },
     { id: 'payments', label: 'Cuenta Corriente', icon: CreditCard, roles: ['admin', 'member'] },
     { id: 'exercises', label: 'Ejercicios', icon: Activity, roles: ['admin', 'member'] },
     { id: 'plans', label: 'Planes', icon: Dumbbell, roles: ['admin', 'member'] },
@@ -1349,7 +1429,7 @@ export default function App() {
 
     switch (activeTab) {
       case 'dashboard': return <DashboardView members={members} ledger={ledger} />;
-      case 'members': return <MembersView members={members} setMembers={setMembers} />;
+      case 'members': return <MembersView members={members} setMembers={setMembers} currentUser={user} />;
       case 'payments': return <CurrentAccountView members={members} ledger={ledger} setLedger={setLedger} currentUser={user} />;
       case 'exercises': return <ExercisesView exercises={exercises} setExercises={setExercises} currentUser={user} />;
       case 'plans': return <PlansView members={members} exercises={exercises} plans={plans} setPlans={setPlans} currentUser={user} />;
