@@ -65,20 +65,14 @@ const callGeminiAPI = async (prompt) => {
 };
 
 const INITIAL_MEMBERS = [
-  { id: 1, firstName: 'Juan', lastName: 'Pérez', dni: '38123456', phone: '+54 9 351 1234567', birthday: '1995-05-12', plan: 'Premium', status: 'Activo', joinDate: '2026-01-15', lastVisit: 'Hoy, 08:30 AM' },
-  { id: 2, firstName: 'María', lastName: 'Gómez', dni: '40765432', phone: '+54 9 351 7654321', birthday: '1998-08-22', plan: 'Básico', status: 'Activo', joinDate: '2026-02-01', lastVisit: 'Ayer, 18:45 PM' },
-  { id: 3, firstName: 'Carlos', lastName: 'Rodríguez', dni: '35555666', phone: '+54 9 351 5556666', birthday: '1990-11-04', plan: 'Crossfit', status: 'Inactivo', joinDate: '2025-11-20', lastVisit: 'Hace 2 semanas' },
+  { id: 1, firstName: 'Juan', lastName: 'Pérez', dni: '38123456', phone: '+54 9 351 1234567', birthday: '1995-05-12', status: 'Activo', joinDate: '2026-01-15', lastVisit: 'Hoy, 08:30 AM' },
+  { id: 2, firstName: 'María', lastName: 'Gómez', dni: '40765432', phone: '+54 9 351 7654321', birthday: '1998-08-22', status: 'Activo', joinDate: '2026-02-01', lastVisit: 'Ayer, 18:45 PM' },
+  { id: 3, firstName: 'Carlos', lastName: 'Rodríguez', dni: '35555666', phone: '+54 9 351 5556666', birthday: '1990-11-04', status: 'Inactivo', joinDate: '2025-11-20', lastVisit: 'Hace 2 semanas' },
 ];
 
 const INITIAL_LEDGER = {
   // Ej: { "1-2026-03": { status: 'pagado', amount: 30000, note: '' } }
 };
-
-const PLANS = [
-  { id: 1, name: 'Básico', price: 30000, features: ['Acceso a sala de musculación', 'Horario de 08:00 a 16:00', 'Vestuarios'], color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  { id: 2, name: 'Premium', price: 30000, features: ['Pase libre 24/7', 'Clases grupales incluidas', 'Asesoramiento nutricional', 'Toallas y lockers'], color: 'bg-purple-100 text-purple-700 border-purple-200' },
-  { id: 3, name: 'Crossfit', price: 30000, features: ['Acceso a Box', 'Clases dirigidas', 'Open Box', 'Seguimiento de RM'], color: 'bg-orange-100 text-orange-700 border-orange-200' },
-];
 
 const CLASSES = [
   { id: 1, name: 'Spinning', instructor: 'Marta V.', time: '08:00 AM', duration: '45 min', capacity: 20, enrolled: 18 },
@@ -178,7 +172,6 @@ const DashboardView = ({ members, ledger }) => {
               <thead className="bg-gray-50 text-gray-500 font-medium">
                 <tr>
                   <th className="px-5 py-3">Socio</th>
-                  <th className="px-5 py-3">Plan</th>
                   <th className="px-5 py-3">Hora</th>
                   <th className="px-5 py-3">Estado</th>
                 </tr>
@@ -187,7 +180,6 @@ const DashboardView = ({ members, ledger }) => {
                 {members.slice(0,4).map((m, i) => (
                   <tr key={i} className="hover:bg-gray-50">
                     <td className="px-5 py-3 font-medium text-gray-800">{m.firstName} {m.lastName}</td>
-                    <td className="px-5 py-3">{m.plan}</td>
                     <td className="px-5 py-3">{m.lastVisit || 'Hoy'}</td>
                     <td className="px-5 py-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -242,7 +234,6 @@ const MembersView = ({ members, setMembers }) => {
     phone: '', 
     birthday: '', 
     joinDate: new Date().toISOString().split('T')[0],
-    plan: 'Básico',
     status: 'Activo'
   });
 
@@ -261,7 +252,6 @@ const MembersView = ({ members, setMembers }) => {
       phone: '',
       birthday: '',
       joinDate: new Date().toISOString().split('T')[0],
-      plan: 'Básico',
       status: 'Activo'
     });
     setShowAddModal(true);
@@ -276,7 +266,6 @@ const MembersView = ({ members, setMembers }) => {
       phone: member.phone,
       birthday: member.birthday || '',
       joinDate: member.joinDate || new Date().toISOString().split('T')[0],
-      plan: member.plan,
       status: member.status || 'Activo'
     });
     setShowAddModal(true);
@@ -343,7 +332,6 @@ const MembersView = ({ members, setMembers }) => {
                 <th className="px-6 py-4">Socio</th>
                 <th className="px-6 py-4">DNI / Contacto</th>
                 <th className="px-6 py-4">Fecha Ingreso / Cumpleaños</th>
-                <th className="px-6 py-4">Plan</th>
                 <th className="px-6 py-4">Estado</th>
                 <th className="px-6 py-4 text-right">Acciones</th>
               </tr>
@@ -372,9 +360,6 @@ const MembersView = ({ members, setMembers }) => {
                     <td className="px-6 py-4 text-xs">
                       <p className="text-gray-800">Ingreso: {member.joinDate}</p>
                       <p className="text-gray-500 flex items-center gap-1 mt-0.5"><Cake size={12}/> Cumple: {member.birthday || 'No registrada'}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="font-medium text-gray-700">{member.plan}</span>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${
@@ -457,21 +442,13 @@ const MembersView = ({ members, setMembers }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Plan / Actividad</label>
-                  <select value={memberForm.plan} onChange={e => setMemberForm({...memberForm, plan: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
-                    {PLANS.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                  <select value={memberForm.status} onChange={e => setMemberForm({...memberForm, status: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
-                    <option value="Activo">Activo</option>
-                    <option value="Inactivo">Inactivo</option>
-                    <option value="Pendiente">Pendiente</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                <select value={memberForm.status} onChange={e => setMemberForm({...memberForm, status: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                  <option value="Activo">Activo</option>
+                  <option value="Inactivo">Inactivo</option>
+                  <option value="Pendiente">Pendiente</option>
+                </select>
               </div>
 
               <div className="pt-4 flex justify-end gap-3">
@@ -534,9 +511,29 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
     return { status: 'pendiente', amount: 30000, note: '' };
   };
 
+  // Cálculo del Balance de Cuenta Corriente para el socio seleccionado en el año seleccionado
+  const memberBalance = useMemo(() => {
+    if (!selectedMember) return { totalOwed: 0, totalPaid: 0, balance: 0 };
+    
+    let totalOwed = 0;
+    let totalPaid = 0;
+
+    MONTHS.forEach(month => {
+      const statusData = getCalculatedMonthStatus(selectedMember, selectedYear, month.number);
+      if (statusData.status === 'pendiente') {
+        totalOwed += 30000;
+      } else if (statusData.status === 'pagado') {
+        totalPaid += Number(statusData.amount || 30000);
+      }
+    });
+
+    // Balance positivo = al día o a favor; Negativo = saldo deudor total
+    const balance = totalPaid - totalOwed;
+    return { totalOwed, totalPaid, balance };
+  }, [selectedMember, selectedYear, ledger]);
+
   const handleOpenNovedad = (month) => {
     setActiveMonthForNovedad(month);
-    const ledgerKey = `${selectedMember.id}-${selectedYear}-${month.number}`;
     const current = getCalculatedMonthStatus(selectedMember, selectedYear, month.number);
     
     setNovedadForm({
@@ -606,7 +603,7 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
                   >
                     <div>
                       <p className="font-bold text-sm">{m.firstName} {m.lastName}</p>
-                      <p className="text-xs opacity-75">DNI: {m.dni} • Plan: {m.plan}</p>
+                      <p className="text-xs opacity-75">DNI: {m.dni}</p>
                     </div>
                   </button>
                 );
@@ -627,6 +624,24 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
                 <div className="bg-indigo-900 text-white px-4 py-2 rounded-xl text-xs flex items-center gap-2">
                   <AlertCircle size={16} className="text-amber-400" />
                   <span>Valor de Cuota Fija: <strong>$30.000</strong></span>
+                </div>
+              </div>
+
+              {/* Resumen de Estado de Cuenta Corriente (Balance) */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 border border-slate-200 p-4 rounded-xl">
+                <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-xs">
+                  <p className="text-xs text-gray-500 font-medium">Total Pagado ({selectedYear})</p>
+                  <p className="text-lg font-bold text-emerald-600">${memberBalance.totalPaid.toLocaleString('es-AR')}</p>
+                </div>
+                <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-xs">
+                  <p className="text-xs text-gray-500 font-medium">Deuda Acumulada ({selectedYear})</p>
+                  <p className="text-lg font-bold text-red-600">${memberBalance.totalOwed.toLocaleString('es-AR')}</p>
+                </div>
+                <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-xs">
+                  <p className="text-xs text-gray-500 font-medium">Balance Neto</p>
+                  <p className={`text-lg font-bold ${memberBalance.balance >= 0 ? 'text-indigo-600' : 'text-red-700'}`}>
+                    ${memberBalance.balance.toLocaleString('es-AR')}
+                  </p>
                 </div>
               </div>
 
@@ -722,7 +737,7 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
                   <option value="pagado">🟢 Pagado (Ingreso de Cuota)</option>
                   <option value="pendiente">🔴 Pendiente (Debe Cuota)</option>
                   <option value="sin_cargo">🔵 Sin Cargo</option>
-                  <option value="ausencia">🟡 Ausencia en todo el mes</option>
+                  <option value="ausencia">🟡 Ausencia en todo el mes (No corresponde)</option>
                 </select>
               </div>
 
@@ -926,7 +941,7 @@ const LoginScreen = ({ onLogin, members, admins }) => {
       const last4 = phoneClean.length >= 4 ? phoneClean.slice(-4) : '';
 
       if (password === last4 || password === '123456') {
-        onLogin({ name: `${foundMember.firstName} ${foundMember.lastName}`, dni: foundMember.dni, role: 'member', plan: foundMember.plan });
+        onLogin({ name: `${foundMember.firstName} ${foundMember.lastName}`, dni: foundMember.dni, role: 'member' });
         return;
       } else {
         setError(`Contraseña incorrecta. (Usa los últimos 4 dígitos de tu teléfono: ${last4 || 'N/D'})`);
