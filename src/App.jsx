@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -204,21 +204,18 @@ const DashboardView = ({ members }) => {
 const MembersView = ({ members, setMembers }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newMember, setNewMember] = useState({ 
+  const [editingMemberId, setEditingMemberId] = useState(null);
+  
+  const [memberForm, setMemberForm] = useState({ 
     firstName: '', 
     lastName: '', 
     dni: '', 
     phone: '', 
     birthday: '', 
     joinDate: new Date().toISOString().split('T')[0],
-    plan: 'Básico' 
+    plan: 'Básico',
+    status: 'Activo'
   });
-
-  const [showAIModal, setShowAIModal] = useState(false);
-  const [selectedMember, setSelectedMember] = useState(null);
-  const [aiGoal, setAiGoal] = useState('');
-  const [aiResult, setAiResult] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
 
   const filteredMembers = members.filter(m => 
     m.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -226,29 +223,57 @@ const MembersView = ({ members, setMembers }) => {
     m.dni.includes(searchTerm)
   );
 
-  const handleAddMember = (e) => {
-    e.preventDefault();
-    if (members.some(m => m.dni === newMember.dni.trim())) {
-      alert('Ya existe un socio registrado con este DNI.');
-      return;
-    }
-    const member = {
-      ...newMember,
-      id: members.length + 1,
-      status: 'Activo',
-      lastVisit: 'Nunca'
-    };
-    setMembers([...members, member]);
-    setShowAddModal(false);
-    setNewMember({ 
-      firstName: '', 
-      lastName: '', 
-      dni: '', 
-      phone: '', 
-      birthday: '', 
+  const handleOpenAdd = () => {
+    setEditingMemberId(null);
+    setMemberForm({
+      firstName: '',
+      lastName: '',
+      dni: '',
+      phone: '',
+      birthday: '',
       joinDate: new Date().toISOString().split('T')[0],
-      plan: 'Básico' 
+      plan: 'Básico',
+      status: 'Activo'
     });
+    setShowAddModal(true);
+  };
+
+  const handleOpenEdit = (member) => {
+    setEditingMemberId(member.id);
+    setMemberForm({
+      firstName: member.firstName,
+      lastName: member.lastName,
+      dni: member.dni,
+      phone: member.phone,
+      birthday: member.birthday || '',
+      joinDate: member.joinDate || new Date().toISOString().split('T')[0],
+      plan: member.plan,
+      status: member.status || 'Activo'
+    });
+    setShowAddModal(true);
+  };
+
+  const handleSaveMember = (e) => {
+    e.preventDefault();
+    
+    if (editingMemberId) {
+      // Editar existente
+      setMembers(members.map(m => m.id === editingMemberId ? { ...m, ...memberForm } : m));
+    } else {
+      // Crear nuevo
+      if (members.some(m => m.dni === memberForm.dni.trim())) {
+        alert('Ya existe un socio registrado con este DNI.');
+        return;
+      }
+      const newMember = {
+        ...memberForm,
+        id: members.length > 0 ? Math.max(...members.map(m => m.id)) + 1 : 1,
+        lastVisit: 'Nunca'
+      };
+      setMembers([...members, newMember]);
+    }
+    
+    setShowAddModal(false);
   };
 
   const handleDelete = (id) => {
@@ -257,32 +282,12 @@ const MembersView = ({ members, setMembers }) => {
     }
   };
 
-  const handleGenerateRoutine = async () => {
-    if (!aiGoal) return alert("Por favor, ingresa el objetivo del socio.");
-    setIsGenerating(true);
-    setAiResult('');
-    
-    const prompt = `Actúa como un entrenador personal experto de primer nivel. Crea una rutina de entrenamiento semanal para el socio ${selectedMember.firstName} ${selectedMember.lastName}. 
-    Este socio tiene contratado el plan "${selectedMember.plan}". 
-    Su objetivo principal es: "${aiGoal}".
-    Haz que la rutina sea motivadora, incluye días de descanso, y usa formato markdown (viñetas, negritas) para que sea fácil de leer. No seas demasiado extenso, enfócate en lo accionable.`;
-
-    try {
-      const response = await callGeminiAPI(prompt);
-      setAiResult(response);
-    } catch (error) {
-      setAiResult("Hubo un error al generar la rutina. Por favor intenta nuevamente.");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-gray-800">Gestión de Socios (ABM)</h2>
         <button 
-          onClick={() => setShowAddModal(true)}
+          onClick={handleOpenAdd}
           className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium w-full sm:w-auto justify-center"
         >
           <UserPlus size={18} />
@@ -356,16 +361,11 @@ const MembersView = ({ members, setMembers }) => {
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
                         <button 
-                          title="Generar rutina con IA"
-                          onClick={() => {
-                            setSelectedMember(member);
-                            setAiGoal('');
-                            setAiResult('');
-                            setShowAIModal(true);
-                          }}
-                          className="p-1.5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                          title="Modificar socio"
+                          onClick={() => handleOpenEdit(member)}
+                          className="p-1.5 text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
                         >
-                          <Sparkles size={16} />
+                          <Edit size={16} />
                         </button>
                         <button 
                           title="Eliminar socio"
@@ -388,31 +388,33 @@ const MembersView = ({ members, setMembers }) => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
             <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-indigo-50">
-              <h3 className="text-lg font-bold text-indigo-900">Dar de Alta Nuevo Socio</h3>
+              <h3 className="text-lg font-bold text-indigo-900">
+                {editingMemberId ? 'Modificar Datos de Socio' : 'Dar de Alta Nuevo Socio'}
+              </h3>
               <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleAddMember} className="p-5 space-y-4">
+            <form onSubmit={handleSaveMember} className="p-5 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                  <input required type="text" value={newMember.firstName} onChange={e => setNewMember({...newMember, firstName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                  <input required type="text" value={memberForm.firstName} onChange={e => setMemberForm({...memberForm, firstName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
-                  <input required type="text" value={newMember.lastName} onChange={e => setNewMember({...newMember, lastName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                  <input required type="text" value={memberForm.lastName} onChange={e => setMemberForm({...memberForm, lastName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">DNI (Usuario de acceso)</label>
-                  <input required type="text" placeholder="Ej: 38123456" value={newMember.dni} onChange={e => setNewMember({...newMember, dni: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                  <input required type="text" placeholder="Ej: 38123456" value={memberForm.dni} onChange={e => setMemberForm({...memberForm, dni: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Número de Teléfono</label>
-                  <input required type="tel" placeholder="Ej: 3511234567" value={newMember.phone} onChange={e => setNewMember({...newMember, phone: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                  <input required type="tel" placeholder="Ej: 3511234567" value={memberForm.phone} onChange={e => setMemberForm({...memberForm, phone: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
                   <p className="text-[11px] text-gray-500 mt-1">🔑 Clave: Últimos 4 dígitos del teléfono</p>
                 </div>
               </div>
@@ -420,73 +422,38 @@ const MembersView = ({ members, setMembers }) => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Ingreso</label>
-                  <input required type="date" value={newMember.joinDate} onChange={e => setNewMember({...newMember, joinDate: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                  <input required type="date" value={memberForm.joinDate} onChange={e => setMemberForm({...memberForm, joinDate: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Cumpleaños</label>
-                  <input required type="date" value={newMember.birthday} onChange={e => setNewMember({...newMember, birthday: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                  <input required type="date" value={memberForm.birthday} onChange={e => setMemberForm({...memberForm, birthday: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
-                <select value={newMember.plan} onChange={e => setNewMember({...newMember, plan: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
-                  {PLANS.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+                  <select value={memberForm.plan} onChange={e => setMemberForm({...memberForm, plan: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    {PLANS.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                  <select value={memberForm.status} onChange={e => setMemberForm({...memberForm, status: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    <option value="Activo">Activo</option>
+                    <option value="Inactivo">Inactivo</option>
+                    <option value="Pendiente">Pendiente</option>
+                  </select>
+                </div>
               </div>
 
               <div className="pt-4 flex justify-end gap-3">
                 <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">Registrar Socio</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showAIModal && selectedMember && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-amber-50 to-orange-50">
-              <div className="flex items-center gap-2 text-amber-600">
-                <Sparkles size={20} />
-                <h3 className="text-lg font-bold">Generador de Rutina IA ✨</h3>
-              </div>
-              <button onClick={() => setShowAIModal(false)} className="text-gray-400 hover:text-gray-600">
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="p-5 overflow-y-auto flex-1 space-y-4">
-              <div className="bg-white p-4 rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-600 mb-2">Generando rutina para <strong>{selectedMember.firstName} {selectedMember.lastName}</strong> (Plan {selectedMember.plan})</p>
-                <label className="block text-sm font-medium text-gray-700 mb-1">¿Cuál es el objetivo principal del socio?</label>
-                <input 
-                  type="text" 
-                  placeholder="Ej: Bajar 5kg, ganar fuerza, mejorar cardio..." 
-                  value={aiGoal} 
-                  onChange={e => setAiGoal(e.target.value)} 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 mb-3" 
-                />
-                <button 
-                  onClick={handleGenerateRoutine}
-                  disabled={isGenerating}
-                  className="w-full px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 transition-colors text-sm font-bold flex justify-center items-center gap-2 disabled:opacity-70"
-                >
-                  {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
-                  {isGenerating ? 'Generando Rutina...' : '✨ Generar Rutina Personalizada'}
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
+                  {editingMemberId ? 'Guardar Cambios' : 'Registrar Socio'}
                 </button>
               </div>
-
-              {aiResult && (
-                <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
-                  <h4 className="font-bold text-gray-800 mb-3">Rutina Sugerida:</h4>
-                  <div className="prose prose-sm text-gray-700 max-w-none whitespace-pre-wrap">
-                    {aiResult}
-                  </div>
-                </div>
-              )}
-            </div>
+            </form>
           </div>
         </div>
       )}
@@ -851,10 +818,28 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [members, setMembers] = useState(INITIAL_MEMBERS);
-  const [admins, setAdmins] = useState([
-    { id: 1, name: 'Admin Principal', username: 'admin', password: '123456' }
-  ]);
+  
+  // Persistencia de Socios en LocalStorage
+  const [members, setMembers] = useState(() => {
+    const saved = localStorage.getItem('gym_members');
+    return saved ? JSON.parse(saved) : INITIAL_MEMBERS;
+  });
+
+  // Persistencia de Administradores en LocalStorage
+  const [admins, setAdmins] = useState(() => {
+    const saved = localStorage.getItem('gym_admins');
+    return saved ? JSON.parse(saved) : [
+      { id: 1, name: 'Admin Principal', username: 'admin', password: '123456' }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('gym_members', JSON.stringify(members));
+  }, [members]);
+
+  useEffect(() => {
+    localStorage.setItem('gym_admins', JSON.stringify(admins));
+  }, [admins]);
 
   if (!user) {
     return <LoginScreen members={members} admins={admins} onLogin={(userData) => { setUser(userData); setActiveTab('dashboard'); }} />;
