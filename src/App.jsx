@@ -31,7 +31,9 @@ import {
   Cake,
   Phone,
   DollarSign,
-  FileText
+  FileText,
+  Check,
+  AlertCircle
 } from 'lucide-react';
 
 const callGeminiAPI = async (prompt) => {
@@ -63,18 +65,14 @@ const callGeminiAPI = async (prompt) => {
 };
 
 const INITIAL_MEMBERS = [
-  { id: 1, firstName: 'Juan', lastName: 'Pérez', dni: '38123456', phone: '+54 9 351 1234567', birthday: '1995-05-12', plan: 'Premium', status: 'Activo', joinDate: '2025-01-15', lastVisit: 'Hoy, 08:30 AM' },
-  { id: 2, firstName: 'María', lastName: 'Gómez', dni: '40765432', phone: '+54 9 351 7654321', birthday: '1998-08-22', plan: 'Básico', status: 'Activo', joinDate: '2025-02-01', lastVisit: 'Ayer, 18:45 PM' },
-  { id: 3, firstName: 'Carlos', lastName: 'Rodríguez', dni: '35555666', phone: '+54 9 351 5556666', birthday: '1990-11-04', plan: 'Crossfit', status: 'Inactivo', joinDate: '2024-11-20', lastVisit: 'Hace 2 semanas' },
-  { id: 4, firstName: 'Ana', lastName: 'Martínez', dni: '42999888', phone: '+54 9 351 9998888', birthday: '2000-02-15', plan: 'Premium', status: 'Activo', joinDate: '2025-10-05', lastVisit: 'Hoy, 07:00 AM' },
-  { id: 5, firstName: 'Lucas', lastName: 'Fernández', dni: '44222333', phone: '+54 9 351 2223333', birthday: '1997-09-30', plan: 'Básico', status: 'Pendiente', joinDate: '2026-02-20', lastVisit: 'Nunca' },
+  { id: 1, firstName: 'Juan', lastName: 'Pérez', dni: '38123456', phone: '+54 9 351 1234567', birthday: '1995-05-12', plan: 'Premium', status: 'Activo', joinDate: '2026-01-15', lastVisit: 'Hoy, 08:30 AM' },
+  { id: 2, firstName: 'María', lastName: 'Gómez', dni: '40765432', phone: '+54 9 351 7654321', birthday: '1998-08-22', plan: 'Básico', status: 'Activo', joinDate: '2026-02-01', lastVisit: 'Ayer, 18:45 PM' },
+  { id: 3, firstName: 'Carlos', lastName: 'Rodríguez', dni: '35555666', phone: '+54 9 351 5556666', birthday: '1990-11-04', plan: 'Crossfit', status: 'Inactivo', joinDate: '2025-11-20', lastVisit: 'Hace 2 semanas' },
 ];
 
-const INITIAL_PAYMENTS = [
-  { id: 1, memberId: 1, date: '2026-03-01', amount: 30000, description: 'Cuota Marzo 2026', type: 'Pago' },
-  { id: 2, memberId: 2, date: '2026-03-02', amount: 30000, description: 'Cuota Marzo 2026', type: 'Pago' },
-  { id: 3, memberId: 3, date: '2026-02-10', amount: 30000, description: 'Cuota Febrero 2026', type: 'Pago' },
-];
+const INITIAL_LEDGER = {
+  // Ej: { "1-2026-03": { status: 'pagado', amount: 30000, note: '' } }
+};
 
 const PLANS = [
   { id: 1, name: 'Básico', price: 30000, features: ['Acceso a sala de musculación', 'Horario de 08:00 a 16:00', 'Vestuarios'], color: 'bg-blue-100 text-blue-700 border-blue-200' },
@@ -89,9 +87,35 @@ const CLASSES = [
   { id: 4, name: 'Zumba', instructor: 'Leo G.', time: '19:30 PM', duration: '50 min', capacity: 30, enrolled: 28 },
 ];
 
-const DashboardView = ({ members, payments }) => {
+const MONTHS = [
+  { number: 1, name: 'Enero' },
+  { number: 2, name: 'Febrero' },
+  { number: 3, name: 'Marzo' },
+  { number: 4, name: 'Abril' },
+  { number: 5, name: 'Mayo' },
+  { number: 6, name: 'Junio' },
+  { number: 7, name: 'Julio' },
+  { number: 8, name: 'Agosto' },
+  { number: 9, name: 'Septiembre' },
+  { number: 10, name: 'Octubre' },
+  { number: 11, name: 'Noviembre' },
+  { number: 12, name: 'Diciembre' },
+];
+
+const DashboardView = ({ members, ledger }) => {
   const activeMembers = members.filter(m => m.status === 'Activo').length;
-  const totalRevenue = payments.reduce((acc, curr) => acc + (curr.type === 'Pago' ? curr.amount : 0), 0);
+  
+  // Calcular recaudación total sumando los pagos de todos los meses de todos los socios
+  const totalRevenue = useMemo(() => {
+    let total = 0;
+    Object.keys(ledger).forEach(key => {
+      const entry = ledger[key];
+      if (entry && entry.status === 'pagado') {
+        total += Number(entry.amount || 30000);
+      }
+    });
+    return total;
+  }, [ledger]);
 
   return (
     <div className="space-y-6">
@@ -128,7 +152,7 @@ const DashboardView = ({ members, payments }) => {
             <TrendingUp size={24} />
           </div>
           <div>
-            <p className="text-sm text-gray-500 font-medium">Ingresos Totales</p>
+            <p className="text-sm text-gray-500 font-medium">Ingresos Totales (Pagos)</p>
             <p className="text-2xl font-bold text-gray-800">${totalRevenue.toLocaleString('es-AR')}</p>
           </div>
         </div>
@@ -164,7 +188,7 @@ const DashboardView = ({ members, payments }) => {
                   <tr key={i} className="hover:bg-gray-50">
                     <td className="px-5 py-3 font-medium text-gray-800">{m.firstName} {m.lastName}</td>
                     <td className="px-5 py-3">{m.plan}</td>
-                    <td className="px-5 py-3">{m.lastVisit}</td>
+                    <td className="px-5 py-3">{m.lastVisit || 'Hoy'}</td>
                     <td className="px-5 py-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         m.status === 'Activo' ? 'bg-emerald-100 text-emerald-700' : 
@@ -464,164 +488,209 @@ const MembersView = ({ members, setMembers }) => {
   );
 };
 
-const CurrentAccountView = ({ members, payments, setPayments }) => {
-  const [selectedMemberId, setSelectedMemberId] = useState(members[0]?.id || '');
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentForm, setPaymentForm] = useState({
-    date: new Date().toISOString().split('T')[0],
+const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
+  // Selector de año actual
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  // Si es admin, puede elegir qué socio ver. Si es socio, solo ve su propia cuenta.
+  const initialMemberId = currentUser.role === 'admin' ? (members[0]?.id || '') : (members.find(m => m.dni === currentUser.dni)?.id || members[0]?.id || '');
+  const [selectedMemberId, setSelectedMemberId] = useState(initialMemberId);
+
+  // Modal para Registrar Novedad
+  const [showNovedadModal, setShowNovedadModal] = useState(false);
+  const [activeMonthForNovedad, setActiveMonthForNovedad] = useState(null);
+  const [novedadForm, setNovedadForm] = useState({
+    status: 'pagado', // pagado | sin_cargo | ausencia
     amount: 30000,
-    description: 'Cuota Mensual',
-    type: 'Pago'
+    note: ''
   });
 
   const selectedMember = members.find(m => m.id === Number(selectedMemberId)) || members[0];
 
-  const memberPayments = payments.filter(p => p.memberId === Number(selectedMemberId));
+  // Calcular deudas pendientes automáticas según la fecha de ingreso
+  const getCalculatedMonthStatus = (member, year, monthNumber) => {
+    if (!member || !member.joinDate) return { status: 'pendiente', amount: 30000, note: '' };
 
-  // Cálculo de cuenta corriente (supongamos una cuota mensual fija de $30.000 generada al unirse o por mes)
-  // Para simplificar y hacerlo práctico: sumamos todos los Pagos registrados.
-  const totalPaid = memberPayments.filter(p => p.type === 'Pago').reduce((acc, curr) => acc + curr.amount, 0);
-  const totalCharges = memberPayments.filter(p => p.type === 'Cargo').reduce((acc, curr) => acc + curr.amount, 0);
-  const balance = totalPaid - totalCharges; // O saldo a favor / deuda según se defina. Aquí sumamos pagos.
+    const [joinYear, joinMonth] = member.joinDate.split('-').map(Number);
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1;
 
-  const handleAddPayment = (e) => {
-    e.preventDefault();
-    const newPayment = {
-      id: payments.length > 0 ? Math.max(...payments.map(p => p.id)) + 1 : 1,
-      memberId: Number(selectedMemberId),
-      date: paymentForm.date,
-      amount: Number(paymentForm.amount),
-      description: paymentForm.description,
-      type: paymentForm.type
-    };
-    setPayments([newPayment, ...payments]);
-    setShowPaymentModal(false);
-    setPaymentForm({
-      date: new Date().toISOString().split('T')[0],
-      amount: 30000,
-      description: 'Cuota Mensual',
-      type: 'Pago'
-    });
+    // Si el mes/año es anterior a la fecha de ingreso del socio, no corresponde pagar
+    if (year < joinYear || (year === joinYear && monthNumber < joinMonth)) {
+      return { status: 'no_corresponde', amount: 0, note: 'Antes del alta' };
+    }
+
+    const ledgerKey = `${member.id}-${year}-${monthNumber}`;
+    if (ledger[ledgerKey]) {
+      return ledger[ledgerKey];
+    }
+
+    // Si es un mes futuro al actual, todavía no adeuda
+    if (year > currentYear || (year === currentYear && monthNumber > currentMonth)) {
+      return { status: 'futuro', amount: 0, note: '' };
+    }
+
+    // Por defecto, si el mes ya transcurrió o es el actual y no tiene registro, está PENDIENTE (Debe)
+    return { status: 'pendiente', amount: 30000, note: '' };
   };
 
-  const handleDeletePayment = (id) => {
-    if (window.confirm('¿Eliminar este registro de cuenta corriente?')) {
-      setPayments(payments.filter(p => p.id !== id));
-    }
+  const handleOpenNovedad = (month) => {
+    setActiveMonthForNovedad(month);
+    const ledgerKey = `${selectedMember.id}-${selectedYear}-${month.number}`;
+    const current = getCalculatedMonthStatus(selectedMember, selectedYear, month.number);
+    
+    setNovedadForm({
+      status: current.status === 'pendiente' || current.status === 'futuro' || current.status === 'no_corresponde' ? 'pagado' : current.status,
+      amount: current.amount || 30000,
+      note: current.note || ''
+    });
+    setShowNovedadModal(true);
+  };
+
+  const handleSaveNovedad = (e) => {
+    e.preventDefault();
+    if (!activeMonthForNovedad || !selectedMember) return;
+
+    const ledgerKey = `${selectedMember.id}-${selectedYear}-${activeMonthForNovedad.number}`;
+    const updatedLedger = {
+      ...ledger,
+      [ledgerKey]: {
+        status: novedadForm.status,
+        amount: novedadForm.status === 'pagado' ? Number(novedadForm.amount) : 0,
+        note: novedadForm.note
+      }
+    };
+    setLedger(updatedLedger);
+    setShowNovedadModal(false);
   };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Cuenta Corriente de Socios</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Control de pagos y valor fijo de cuota sin importar la actividad.</p>
+          <h2 className="text-2xl font-bold text-gray-800">Cuenta Corriente - Calendario Anual</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Control de cuotas mensuales, pagos y novedades por socio.</p>
         </div>
-        <button 
-          onClick={() => setShowPaymentModal(true)}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium"
-        >
-          <DollarSign size={18} />
-          Registrar Movimiento (Pago / Cargo)
-        </button>
+        
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-gray-700">Año:</label>
+          <select 
+            value={selectedYear} 
+            onChange={e => setSelectedYear(Number(e.target.value))}
+            className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value={2025}>2025</option>
+            <option value={2026}>2026</option>
+            <option value={2027}>2027</option>
+          </select>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Selector de Socio */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4 lg:col-span-1">
-          <h3 className="font-semibold text-gray-800 text-sm uppercase tracking-wider">Seleccionar Socio</h3>
-          <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
-            {members.map(m => {
-              const isSelected = m.id === Number(selectedMemberId);
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => setSelectedMemberId(m.id)}
-                  className={`w-full text-left p-3 rounded-xl transition-all flex items-center justify-between border ${
-                    isSelected 
-                      ? 'bg-indigo-50 border-indigo-200 text-indigo-900 shadow-sm' 
-                      : 'bg-white border-gray-100 hover:bg-gray-50 text-gray-700'
-                  }`}
-                >
-                  <div>
-                    <p className="font-bold text-sm">{m.firstName} {m.lastName}</p>
-                    <p className="text-xs opacity-75">DNI: {m.dni} • Plan: {m.plan}</p>
-                  </div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    m.status === 'Activo' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {m.status}
-                  </span>
-                </button>
-              );
-            })}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Selector de Socio (Solo visible para Administradores) */}
+        {currentUser.role === 'admin' && (
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4 lg:col-span-1">
+            <h3 className="font-semibold text-gray-800 text-sm uppercase tracking-wider">Seleccionar Socio</h3>
+            <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+              {members.map(m => {
+                const isSelected = m.id === Number(selectedMemberId);
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => setSelectedMemberId(m.id)}
+                    className={`w-full text-left p-3 rounded-xl transition-all flex items-center justify-between border ${
+                      isSelected 
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-900 shadow-sm' 
+                        : 'bg-white border-gray-100 hover:bg-gray-50 text-gray-700'
+                    }`}
+                  >
+                    <div>
+                      <p className="font-bold text-sm">{m.firstName} {m.lastName}</p>
+                      <p className="text-xs opacity-75">DNI: {m.dni} • Plan: {m.plan}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Detalle de Cuenta Corriente */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 lg:col-span-2 space-y-6">
+        {/* Detalle de Meses del Año */}
+        <div className={`bg-white rounded-xl border border-gray-100 shadow-sm p-6 ${currentUser.role === 'admin' ? 'lg:col-span-3' : 'lg:col-span-4'} space-y-6`}>
           {selectedMember ? (
             <>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 border-b border-gray-100 gap-4">
                 <div>
                   <h3 className="text-xl font-bold text-gray-800">{selectedMember.firstName} {selectedMember.lastName}</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">DNI: {selectedMember.dni} | Tel: {selectedMember.phone}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">DNI: {selectedMember.dni} | Ingreso al gimnasio: <span className="font-semibold text-indigo-600">{selectedMember.joinDate}</span></p>
                 </div>
-                <div className="bg-slate-900 text-white px-4 py-2.5 rounded-xl text-right">
-                  <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium">Total Acumulado Pagado</span>
-                  <span className="text-lg font-bold text-emerald-400">${totalPaid.toLocaleString('es-AR')}</span>
+                <div className="bg-indigo-900 text-white px-4 py-2 rounded-xl text-xs flex items-center gap-2">
+                  <AlertCircle size={16} className="text-amber-400" />
+                  <span>Valor de Cuota Fija: <strong>$30.000</strong></span>
                 </div>
               </div>
 
-              <div>
-                <h4 className="font-semibold text-gray-800 text-sm mb-3">Historial de Pagos y Movimientos</h4>
-                <div className="border border-gray-200 rounded-xl overflow-hidden">
-                  <table className="w-full text-left text-sm text-gray-600">
-                    <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-200 text-xs">
-                      <tr>
-                        <th className="px-4 py-3">Fecha</th>
-                        <th className="px-4 py-3">Descripción</th>
-                        <th className="px-4 py-3">Tipo</th>
-                        <th className="px-4 py-3 text-right">Monto</th>
-                        <th className="px-4 py-3 text-right">Acción</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {memberPayments.length > 0 ? (
-                        memberPayments.map(p => (
-                          <tr key={p.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-3 text-xs text-gray-500">{p.date}</td>
-                            <td className="px-4 py-3 font-medium text-gray-800">{p.description}</td>
-                            <td className="px-4 py-3">
-                              <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                                p.type === 'Pago' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
-                              }`}>
-                                {p.type}
-                              </span>
-                            </td>
-                            <td className={`px-4 py-3 text-right font-bold ${p.type === 'Pago' ? 'text-emerald-600' : 'text-red-600'}`}>
-                              {p.type === 'Pago' ? '+' : '-'}${p.amount.toLocaleString('es-AR')}
-                            </td>
-                            <td className="px-4 py-3 text-right">
-                              <button 
-                                onClick={() => handleDeletePayment(p.id)}
-                                className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan="5" className="px-4 py-8 text-center text-gray-400 text-xs">
-                            No hay movimientos registrados para este socio.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {MONTHS.map(month => {
+                  const statusData = getCalculatedMonthStatus(selectedMember, selectedYear, month.number);
+                  
+                  let badgeColor = 'bg-gray-100 text-gray-700 border-gray-200';
+                  let badgeText = 'Futuro';
+                  let icon = <Clock size={14} className="text-gray-400" />;
+
+                  if (statusData.status === 'pagado') {
+                    badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                    badgeText = `Pagado ($${Number(statusData.amount).toLocaleString('es-AR')})`;
+                    icon = <CheckCircle2 size={14} className="text-emerald-600" />;
+                  } else if (statusData.status === 'pendiente') {
+                    badgeColor = 'bg-red-50 text-red-700 border-red-200';
+                    badgeText = 'Debe Cuota ($30.000)';
+                    icon = <AlertCircle size={14} className="text-red-600" />;
+                  } else if (statusData.status === 'ausencia') {
+                    badgeColor = 'bg-amber-50 text-amber-800 border-amber-200';
+                    badgeText = 'Ausente todo el mes';
+                    icon = <XCircle size={14} className="text-amber-600" />;
+                  } else if (statusData.status === 'sin_cargo') {
+                    badgeColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                    badgeText = 'Sin Cargo';
+                    icon = <Check size={14} className="text-blue-600" />;
+                  } else if (statusData.status === 'no_corresponde') {
+                    badgeColor = 'bg-slate-100 text-slate-500 border-slate-200';
+                    badgeText = 'No corresponde';
+                    icon = <Clock size={14} className="text-slate-400" />;
+                  }
+
+                  return (
+                    <div key={month.number} className="border border-gray-200 rounded-xl p-4 flex flex-col justify-between hover:shadow-sm transition-shadow bg-white">
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-bold text-gray-800 text-base">{month.name}</span>
+                          <span className="text-xs text-gray-400 font-mono">{selectedYear}</span>
+                        </div>
+                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${badgeColor} mb-2`}>
+                          {icon}
+                          <span>{badgeText}</span>
+                        </div>
+                        {statusData.note && (
+                          <p className="text-xs text-gray-500 italic mt-1 bg-gray-50 p-1.5 rounded">Nota: {statusData.note}</p>
+                        )}
+                      </div>
+
+                      <div className="pt-3 mt-3 border-t border-gray-100 flex justify-end">
+                        {currentUser.role === 'admin' ? (
+                          <button
+                            onClick={() => handleOpenNovedad(month)}
+                            className="w-full py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-colors flex justify-center items-center gap-1.5"
+                          >
+                            <DollarSign size={14} /> Registrar Novedad
+                          </button>
+                        ) : (
+                          <span className="text-[11px] text-gray-400 font-medium">Estado verificado</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </>
           ) : (
@@ -630,39 +699,61 @@ const CurrentAccountView = ({ members, payments, setPayments }) => {
         </div>
       </div>
 
-      {showPaymentModal && selectedMember && (
+      {/* Modal para Registrar Novedad (Admin) */}
+      {showNovedadModal && activeMonthForNovedad && selectedMember && currentUser.role === 'admin' && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
             <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-indigo-50">
-              <h3 className="text-lg font-bold text-indigo-900">Registrar Movimiento - {selectedMember.firstName}</h3>
-              <button onClick={() => setShowPaymentModal(false)} className="text-gray-400 hover:text-gray-600">
+              <h3 className="text-lg font-bold text-indigo-900">
+                Registrar Novedad • {activeMonthForNovedad.name} {selectedYear}
+              </h3>
+              <button onClick={() => setShowNovedadModal(false)} className="text-gray-400 hover:text-gray-600">
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleAddPayment} className="p-5 space-y-4">
+            <form onSubmit={handleSaveNovedad} className="p-5 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Movimiento</label>
-                <select value={paymentForm.type} onChange={e => setPaymentForm({...paymentForm, type: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
-                  <option value="Pago">Pago (Ingreso)</option>
-                  <option value="Cargo">Cargo (Deuda / Cuota)</option>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Estado del Mes</label>
+                <select 
+                  value={novedadForm.status} 
+                  onChange={e => setNovedadForm({...novedadForm, status: e.target.value})} 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
+                >
+                  <option value="pagado">🟢 Pagado (Ingreso de Cuota)</option>
+                  <option value="pendiente">🔴 Pendiente (Debe Cuota)</option>
+                  <option value="sin_cargo">🔵 Sin Cargo</option>
+                  <option value="ausencia">🟡 Ausencia en todo el mes</option>
                 </select>
               </div>
+
+              {novedadForm.status === 'pagado' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Monto Pagado ($)</label>
+                  <input 
+                    required 
+                    type="number" 
+                    value={novedadForm.amount} 
+                    onChange={e => setNovedadForm({...novedadForm, amount: e.target.value})} 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" 
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">💡 Cuota estándar fija: $30.000</p>
+                </div>
+              )}
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Monto ($)</label>
-                <input required type="number" value={paymentForm.amount} onChange={e => setPaymentForm({...paymentForm, amount: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
-                <p className="text-[11px] text-gray-500 mt-1">💡 Valor fijo sugerido de cuota: $30.000</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Observación o Nota (Opcional)</label>
+                <input 
+                  type="text" 
+                  placeholder="Ej: Pago en efectivo, transferencia, certificado médico..." 
+                  value={novedadForm.note} 
+                  onChange={e => setNovedadForm({...novedadForm, note: e.target.value})} 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" 
+                />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                <input required type="text" placeholder="Ej: Cuota Marzo 2026" value={paymentForm.description} onChange={e => setPaymentForm({...paymentForm, description: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
-                <input required type="date" value={paymentForm.date} onChange={e => setPaymentForm({...paymentForm, date: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
-              </div>
+
               <div className="pt-4 flex justify-end gap-3">
-                <button type="button" onClick={() => setShowPaymentModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">Guardar Movimiento</button>
+                <button type="button" onClick={() => setShowNovedadModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">Guardar Novedad</button>
               </div>
             </form>
           </div>
@@ -673,36 +764,6 @@ const CurrentAccountView = ({ members, payments, setPayments }) => {
 };
 
 const ClassesView = () => {
-  const [showPromoModal, setShowPromoModal] = useState(false);
-  const [selectedClass, setSelectedClass] = useState(null);
-  const [promoResult, setPromoResult] = useState('');
-  const [isGeneratingPromo, setIsGeneratingPromo] = useState(false);
-
-  const handleGeneratePromo = async (cls) => {
-    setSelectedClass(cls);
-    setShowPromoModal(true);
-    setIsGeneratingPromo(true);
-    setPromoResult('');
-
-    const prompt = `Actúa como un experto en marketing de redes sociales para gimnasios. Escribe un post súper cautivador y enérgico para Instagram (incluyendo emojis y 5 hashtags relevantes) promocionando nuestra clase de "${cls.name}". 
-    Detalles de la clase:
-    - Horario: ${cls.time}
-    - Instructor: ${cls.instructor}
-    - Duración: ${cls.duration}
-    - Cupos disponibles: Quedan ${cls.capacity - cls.enrolled} lugares de ${cls.capacity}.
-    
-    Llama a la acción al final invitando a la gente a reservar su lugar.`;
-
-    try {
-      const response = await callGeminiAPI(prompt);
-      setPromoResult(response);
-    } catch (error) {
-      setPromoResult("Error al generar el texto de promoción.");
-    } finally {
-      setIsGeneratingPromo(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -724,48 +785,16 @@ const ClassesView = () => {
                   <p className="text-sm text-gray-500 mt-1">Instructor: {cls.instructor} • {cls.duration}</p>
                 </div>
                 
-                <div className="flex items-center gap-4 w-full sm:w-auto flex-wrap">
-                  <button 
-                    onClick={() => handleGeneratePromo(cls)}
-                    className="text-purple-600 hover:text-purple-800 text-sm font-medium px-3 py-1.5 border border-purple-200 rounded hover:bg-purple-50 transition-colors flex items-center gap-1"
-                  >
-                    <Sparkles size={14} /> ✨ Promocionar
-                  </button>
+                <div className="flex items-center gap-4 w-full sm:w-auto">
+                  <span className="text-xs bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg font-medium">
+                    Cupos: {cls.enrolled}/{cls.capacity}
+                  </span>
                 </div>
               </div>
             ))}
           </div>
         </div>
       </div>
-
-      {showPromoModal && selectedClass && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col">
-            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-purple-50 to-fuchsia-50">
-              <div className="flex items-center gap-2 text-purple-600">
-                <Sparkles size={20} />
-                <h3 className="text-lg font-bold">Post para Redes ✨</h3>
-              </div>
-              <button onClick={() => setShowPromoModal(false)} className="text-gray-400 hover:text-gray-600">
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="p-5">
-              {isGeneratingPromo ? (
-                <div className="flex flex-col items-center justify-center py-10 space-y-3 text-purple-600">
-                  <Loader2 size={32} className="animate-spin" />
-                  <p className="font-medium text-sm animate-pulse">La IA de Gemini está escribiendo un post viral...</p>
-                </div>
-              ) : (
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm text-gray-800 whitespace-pre-wrap font-medium">
-                  {promoResult}
-                </div>
-              )}
-            </div>
-           </div>
-        </div>
-      )}
     </div>
   );
 };
@@ -999,9 +1028,9 @@ export default function App() {
     return saved ? JSON.parse(saved) : INITIAL_MEMBERS;
   });
 
-  const [payments, setPayments] = useState(() => {
-    const saved = localStorage.getItem('gym_payments');
-    return saved ? JSON.parse(saved) : INITIAL_PAYMENTS;
+  const [ledger, setLedger] = useState(() => {
+    const saved = localStorage.getItem('gym_ledger');
+    return saved ? JSON.parse(saved) : INITIAL_LEDGER;
   });
 
   const [admins, setAdmins] = useState(() => {
@@ -1016,8 +1045,8 @@ export default function App() {
   }, [members]);
 
   useEffect(() => {
-    localStorage.setItem('gym_payments', JSON.stringify(payments));
-  }, [payments]);
+    localStorage.setItem('gym_ledger', JSON.stringify(ledger));
+  }, [ledger]);
 
   useEffect(() => {
     localStorage.setItem('gym_admins', JSON.stringify(admins));
@@ -1050,9 +1079,9 @@ export default function App() {
     }
 
     switch (activeTab) {
-      case 'dashboard': return <DashboardView members={members} payments={payments} />;
+      case 'dashboard': return <DashboardView members={members} ledger={ledger} />;
       case 'members': return <MembersView members={members} setMembers={setMembers} />;
-      case 'payments': return <CurrentAccountView members={members} payments={payments} setPayments={setPayments} />;
+      case 'payments': return <CurrentAccountView members={members} ledger={ledger} setLedger={setLedger} currentUser={user} />;
       case 'classes': return <ClassesView />;
       case 'settings': return <SettingsView admins={admins} setAdmins={setAdmins} />;
       default: return (
@@ -1117,7 +1146,7 @@ export default function App() {
               </div>
               <div className="flex-1 overflow-hidden">
                 <p className="text-sm font-medium text-white truncate">{user.name}</p>
-                <p className="text-xs text-indigo-400 truncate capitalize">{user.role === 'admin' ? 'Administrador' : `DNI: ${user.dni}`}</p>
+                <p className="text-xs text-indigo-400 truncate capitalize">{user.role === 'admin' ? 'Administrador' : `Socio (DNI: ${user.dni})`}</p>
               </div>
             </div>
             <button 
