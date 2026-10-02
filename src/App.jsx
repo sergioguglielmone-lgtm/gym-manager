@@ -27,7 +27,9 @@ import {
   ShieldAlert,
   UserPlus,
   Key,
-  ShieldCheck
+  ShieldCheck,
+  Cake,
+  Phone
 } from 'lucide-react';
 
 const callGeminiAPI = async (prompt) => {
@@ -59,11 +61,11 @@ const callGeminiAPI = async (prompt) => {
 };
 
 const INITIAL_MEMBERS = [
-  { id: 1, name: 'Juan Pérez', dni: '38123456', phone: '+54 9 351 1234567', plan: 'Premium', status: 'Activo', joinDate: '2025-01-15', lastVisit: 'Hoy, 08:30 AM' },
-  { id: 2, name: 'María Gómez', dni: '40765432', phone: '+54 9 351 7654321', plan: 'Básico', status: 'Activo', joinDate: '2025-02-01', lastVisit: 'Ayer, 18:45 PM' },
-  { id: 3, name: 'Carlos Rodríguez', dni: '35555666', phone: '+54 9 351 5556666', plan: 'Crossfit', status: 'Inactivo', joinDate: '2024-11-20', lastVisit: 'Hace 2 semanas' },
-  { id: 4, name: 'Ana Martínez', dni: '42999888', phone: '+54 9 351 9998888', plan: 'Premium', status: 'Activo', joinDate: '2025-10-05', lastVisit: 'Hoy, 07:00 AM' },
-  { id: 5, name: 'Lucas Fernández', dni: '44222333', phone: '+54 9 351 2223333', plan: 'Básico', status: 'Pendiente', joinDate: '2026-02-20', lastVisit: 'Nunca' },
+  { id: 1, firstName: 'Juan', lastName: 'Pérez', dni: '38123456', phone: '+54 9 351 1234567', birthday: '1995-05-12', plan: 'Premium', status: 'Activo', joinDate: '2025-01-15', lastVisit: 'Hoy, 08:30 AM' },
+  { id: 2, firstName: 'María', lastName: 'Gómez', dni: '40765432', phone: '+54 9 351 7654321', birthday: '1998-08-22', plan: 'Básico', status: 'Activo', joinDate: '2025-02-01', lastVisit: 'Ayer, 18:45 PM' },
+  { id: 3, firstName: 'Carlos', lastName: 'Rodríguez', dni: '35555666', phone: '+54 9 351 5556666', birthday: '1990-11-04', plan: 'Crossfit', status: 'Inactivo', joinDate: '2024-11-20', lastVisit: 'Hace 2 semanas' },
+  { id: 4, firstName: 'Ana', lastName: 'Martínez', dni: '42999888', phone: '+54 9 351 9998888', birthday: '2000-02-15', plan: 'Premium', status: 'Activo', joinDate: '2025-10-05', lastVisit: 'Hoy, 07:00 AM' },
+  { id: 5, firstName: 'Lucas', lastName: 'Fernández', dni: '44222333', phone: '+54 9 351 2223333', birthday: '1997-09-30', plan: 'Básico', status: 'Pendiente', joinDate: '2026-02-20', lastVisit: 'Nunca' },
 ];
 
 const PLANS = [
@@ -155,7 +157,7 @@ const DashboardView = ({ members }) => {
               <tbody className="divide-y divide-gray-100">
                 {members.slice(0,4).map((m, i) => (
                   <tr key={i} className="hover:bg-gray-50">
-                    <td className="px-5 py-3 font-medium text-gray-800">{m.name}</td>
+                    <td className="px-5 py-3 font-medium text-gray-800">{m.firstName} {m.lastName}</td>
                     <td className="px-5 py-3">{m.plan}</td>
                     <td className="px-5 py-3">{m.lastVisit}</td>
                     <td className="px-5 py-3">
@@ -202,7 +204,15 @@ const DashboardView = ({ members }) => {
 const MembersView = ({ members, setMembers }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newMember, setNewMember] = useState({ name: '', dni: '', phone: '', plan: 'Básico' });
+  const [newMember, setNewMember] = useState({ 
+    firstName: '', 
+    lastName: '', 
+    dni: '', 
+    phone: '', 
+    birthday: '', 
+    joinDate: new Date().toISOString().split('T')[0],
+    plan: 'Básico' 
+  });
 
   const [showAIModal, setShowAIModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
@@ -211,7 +221,8 @@ const MembersView = ({ members, setMembers }) => {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const filteredMembers = members.filter(m => 
-    m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    m.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    m.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     m.dni.includes(searchTerm)
   );
 
@@ -225,12 +236,19 @@ const MembersView = ({ members, setMembers }) => {
       ...newMember,
       id: members.length + 1,
       status: 'Activo',
-      joinDate: new Date().toISOString().split('T')[0],
       lastVisit: 'Nunca'
     };
     setMembers([...members, member]);
     setShowAddModal(false);
-    setNewMember({ name: '', dni: '', phone: '', plan: 'Básico' });
+    setNewMember({ 
+      firstName: '', 
+      lastName: '', 
+      dni: '', 
+      phone: '', 
+      birthday: '', 
+      joinDate: new Date().toISOString().split('T')[0],
+      plan: 'Básico' 
+    });
   };
 
   const handleDelete = (id) => {
@@ -244,7 +262,7 @@ const MembersView = ({ members, setMembers }) => {
     setIsGenerating(true);
     setAiResult('');
     
-    const prompt = `Actúa como un entrenador personal experto de primer nivel. Crea una rutina de entrenamiento semanal para el socio ${selectedMember.name}. 
+    const prompt = `Actúa como un entrenador personal experto de primer nivel. Crea una rutina de entrenamiento semanal para el socio ${selectedMember.firstName} ${selectedMember.lastName}. 
     Este socio tiene contratado el plan "${selectedMember.plan}". 
     Su objetivo principal es: "${aiGoal}".
     Haz que la rutina sea motivadora, incluye días de descanso, y usa formato markdown (viñetas, negritas) para que sea fácil de leer. No seas demasiado extenso, enfócate en lo accionable.`;
@@ -262,7 +280,7 @@ const MembersView = ({ members, setMembers }) => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-gray-800">Gestión de Socios (Altas y Bajas)</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Gestión de Socios (ABM)</h2>
         <button 
           onClick={() => setShowAddModal(true)}
           className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium w-full sm:w-auto justify-center"
@@ -278,7 +296,7 @@ const MembersView = ({ members, setMembers }) => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               type="text" 
-              placeholder="Buscar por nombre o DNI..." 
+              placeholder="Buscar por nombre, apellido o DNI..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
@@ -292,66 +310,75 @@ const MembersView = ({ members, setMembers }) => {
               <tr>
                 <th className="px-6 py-4">Socio</th>
                 <th className="px-6 py-4">DNI / Contacto</th>
+                <th className="px-6 py-4">Fecha Ingreso / Cumpleaños</th>
                 <th className="px-6 py-4">Membresía</th>
                 <th className="px-6 py-4">Estado</th>
                 <th className="px-6 py-4 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredMembers.map((member) => (
-                <tr key={member.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs">
-                        {member.name.split(' ').map(n => n[0]).join('')}
+              {filteredMembers.map((member) => {
+                const phoneClean = member.phone ? member.phone.replace(/\D/g, '') : '';
+                const last4 = phoneClean.length >= 4 ? phoneClean.slice(-4) : '????';
+                return (
+                  <tr key={member.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs">
+                          {member.firstName[0]}{member.lastName[0]}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-800">{member.firstName} {member.lastName}</p>
+                          <p className="text-xs text-indigo-600 font-mono">Clave: {last4}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-800">{member.name}</p>
-                        <p className="text-xs text-gray-500">Ingreso: {member.joinDate}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-gray-800 font-semibold">DNI: {member.dni}</p>
+                      <p className="text-xs text-gray-500">{member.phone}</p>
+                    </td>
+                    <td className="px-6 py-4 text-xs">
+                      <p className="text-gray-800">Ingreso: {member.joinDate}</p>
+                      <p className="text-gray-500 flex items-center gap-1 mt-0.5"><Cake size={12}/> Cumple: {member.birthday || 'No registrada'}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="font-medium text-gray-700">{member.plan}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${
+                        member.status === 'Activo' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+                        member.status === 'Inactivo' ? 'bg-red-50 text-red-700 border-red-200' : 
+                        'bg-yellow-50 text-yellow-700 border-yellow-200'
+                      }`}>
+                        {member.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button 
+                          title="Generar rutina con IA"
+                          onClick={() => {
+                            setSelectedMember(member);
+                            setAiGoal('');
+                            setAiResult('');
+                            setShowAIModal(true);
+                          }}
+                          className="p-1.5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                        >
+                          <Sparkles size={16} />
+                        </button>
+                        <button 
+                          title="Eliminar socio"
+                          onClick={() => handleDelete(member.id)}
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="text-gray-800 font-semibold">DNI: {member.dni}</p>
-                    <p className="text-xs text-gray-500">{member.phone}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="font-medium text-gray-700">{member.plan}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${
-                      member.status === 'Activo' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
-                      member.status === 'Inactivo' ? 'bg-red-50 text-red-700 border-red-200' : 
-                      'bg-yellow-50 text-yellow-700 border-yellow-200'
-                    }`}>
-                      {member.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <button 
-                        title="Generar rutina con IA"
-                        onClick={() => {
-                          setSelectedMember(member);
-                          setAiGoal('');
-                          setAiResult('');
-                          setShowAIModal(true);
-                        }}
-                        className="p-1.5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
-                      >
-                        <Sparkles size={16} />
-                      </button>
-                      <button 
-                        title="Dar de baja / Eliminar"
-                        onClick={() => handleDelete(member.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -359,7 +386,7 @@ const MembersView = ({ members, setMembers }) => {
 
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
             <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-indigo-50">
               <h3 className="text-lg font-bold text-indigo-900">Dar de Alta Nuevo Socio</h3>
               <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
@@ -367,24 +394,47 @@ const MembersView = ({ members, setMembers }) => {
               </button>
             </div>
             <form onSubmit={handleAddMember} className="p-5 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
-                <input required type="text" value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                  <input required type="text" value={newMember.firstName} onChange={e => setNewMember({...newMember, firstName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
+                  <input required type="text" value={newMember.lastName} onChange={e => setNewMember({...newMember, lastName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">DNI (Servirá como usuario de acceso)</label>
-                <input required type="text" placeholder="Ej: 38123456" value={newMember.dni} onChange={e => setNewMember({...newMember, dni: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">DNI (Usuario de acceso)</label>
+                  <input required type="text" placeholder="Ej: 38123456" value={newMember.dni} onChange={e => setNewMember({...newMember, dni: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Número de Teléfono</label>
+                  <input required type="tel" placeholder="Ej: 3511234567" value={newMember.phone} onChange={e => setNewMember({...newMember, phone: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                  <p className="text-[11px] text-gray-500 mt-1">🔑 Clave: Últimos 4 dígitos del teléfono</p>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-                <input required type="tel" value={newMember.phone} onChange={e => setNewMember({...newMember, phone: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Ingreso</label>
+                  <input required type="date" value={newMember.joinDate} onChange={e => setNewMember({...newMember, joinDate: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Cumpleaños</label>
+                  <input required type="date" value={newMember.birthday} onChange={e => setNewMember({...newMember, birthday: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                </div>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
-                <select value={newMember.plan} onChange={e => setNewMember({...newMember, plan: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <select value={newMember.plan} onChange={e => setNewMember({...newMember, plan: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
                   {PLANS.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                 </select>
               </div>
+
               <div className="pt-4 flex justify-end gap-3">
                 <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">Cancelar</button>
                 <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">Registrar Socio</button>
@@ -409,7 +459,7 @@ const MembersView = ({ members, setMembers }) => {
             
             <div className="p-5 overflow-y-auto flex-1 space-y-4">
               <div className="bg-white p-4 rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-600 mb-2">Generando rutina para <strong>{selectedMember.name}</strong> (Plan {selectedMember.plan})</p>
+                <p className="text-sm text-gray-600 mb-2">Generando rutina para <strong>{selectedMember.firstName} {selectedMember.lastName}</strong> (Plan {selectedMember.plan})</p>
                 <label className="block text-sm font-medium text-gray-700 mb-1">¿Cuál es el objetivo principal del socio?</label>
                 <input 
                   type="text" 
@@ -698,19 +748,22 @@ const LoginScreen = ({ onLogin, members, admins }) => {
       }
     }
 
-    // 2. Verificar si es un Socio (usando su DNI)
+    // 2. Verificar si es un Socio (DNI)
     const foundMember = members.find(m => m.dni === identifier.trim());
     if (foundMember) {
-      if (password === '123456' || password === identifier.trim()) {
-        onLogin({ name: foundMember.name, dni: foundMember.dni, role: 'member', plan: foundMember.plan });
+      const phoneClean = foundMember.phone ? foundMember.phone.replace(/\D/g, '') : '';
+      const last4 = phoneClean.length >= 4 ? phoneClean.slice(-4) : '';
+
+      if (password === last4 || password === '123456') {
+        onLogin({ name: `${foundMember.firstName} ${foundMember.lastName}`, dni: foundMember.dni, role: 'member', plan: foundMember.plan });
         return;
       } else {
-        setError('Contraseña incorrecta. (Por defecto usa tu DNI o 123456)');
+        setError(`Contraseña incorrecta. (Usa los últimos 4 dígitos de tu teléfono: ${last4 || 'N/D'})`);
         return;
       }
     }
 
-    setError('Usuario o DNI no encontrado en el sistema.');
+    setError('DNI o Usuario no encontrado en el sistema.');
   };
 
   return (
@@ -721,7 +774,7 @@ const LoginScreen = ({ onLogin, members, admins }) => {
             <Dumbbell size={32} className="text-white" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight">GymManager AI</h1>
-          <p className="text-indigo-200 text-sm mt-1">Ingresa con tu DNI (Socio) o Usuario (Admin)</p>
+          <p className="text-indigo-200 text-sm mt-1">Ingresa con DNI (Socio) o Usuario (Admin)</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-5">
@@ -748,13 +801,13 @@ const LoginScreen = ({ onLogin, members, admins }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">Contraseña</label>
+            <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">Contraseña (Últimos 4 del tel.)</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input 
                 type="password" 
                 required
-                placeholder="••••••"
+                placeholder="••••"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
@@ -781,7 +834,7 @@ const LoginScreen = ({ onLogin, members, admins }) => {
               </button>
               <button 
                 type="button" 
-                onClick={() => { setIdentifier('38123456'); setPassword('38123456'); }}
+                onClick={() => { setIdentifier('38123456'); setPassword('4567'); }}
                 className="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg font-medium hover:bg-emerald-100"
               >
                 🏃‍♂️ Socio (Juan DNI 38123456)
