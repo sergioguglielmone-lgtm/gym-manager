@@ -20,10 +20,16 @@ import {
   Clock,
   Sparkles,
   Loader2,
-  Copy
+  Copy,
+  Lock,
+  User,
+  LogOut,
+  ShieldAlert,
+  UserPlus,
+  Key,
+  ShieldCheck
 } from 'lucide-react';
 
-// --- UTILIDAD DE API GEMINI ---
 const callGeminiAPI = async (prompt) => {
   const apiKey = ""; // Se inyecta automáticamente en el entorno de ejecución
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
@@ -52,13 +58,12 @@ const callGeminiAPI = async (prompt) => {
   }
 };
 
-// --- DATOS DE PRUEBA (MOCK DATA) ---
 const INITIAL_MEMBERS = [
-  { id: 1, name: 'Juan Pérez', email: 'juan.p@email.com', phone: '+54 9 351 1234567', plan: 'Premium', status: 'Activo', joinDate: '2025-01-15', lastVisit: 'Hoy, 08:30 AM' },
-  { id: 2, name: 'María Gómez', email: 'maria.g@email.com', phone: '+54 9 351 7654321', plan: 'Básico', status: 'Activo', joinDate: '2025-02-01', lastVisit: 'Ayer, 18:45 PM' },
-  { id: 3, name: 'Carlos Rodríguez', email: 'carlos.r@email.com', phone: '+54 9 351 5556666', plan: 'Crossfit', status: 'Inactivo', joinDate: '2024-11-20', lastVisit: 'Hace 2 semanas' },
-  { id: 4, name: 'Ana Martínez', email: 'ana.m@email.com', phone: '+54 9 351 9998888', plan: 'Premium', status: 'Activo', joinDate: '2025-10-05', lastVisit: 'Hoy, 07:00 AM' },
-  { id: 5, name: 'Lucas Fernández', email: 'lucas.f@email.com', phone: '+54 9 351 2223333', plan: 'Básico', status: 'Pendiente', joinDate: '2026-02-20', lastVisit: 'Nunca' },
+  { id: 1, name: 'Juan Pérez', dni: '38123456', phone: '+54 9 351 1234567', plan: 'Premium', status: 'Activo', joinDate: '2025-01-15', lastVisit: 'Hoy, 08:30 AM' },
+  { id: 2, name: 'María Gómez', dni: '40765432', phone: '+54 9 351 7654321', plan: 'Básico', status: 'Activo', joinDate: '2025-02-01', lastVisit: 'Ayer, 18:45 PM' },
+  { id: 3, name: 'Carlos Rodríguez', dni: '35555666', phone: '+54 9 351 5556666', plan: 'Crossfit', status: 'Inactivo', joinDate: '2024-11-20', lastVisit: 'Hace 2 semanas' },
+  { id: 4, name: 'Ana Martínez', dni: '42999888', phone: '+54 9 351 9998888', plan: 'Premium', status: 'Activo', joinDate: '2025-10-05', lastVisit: 'Hoy, 07:00 AM' },
+  { id: 5, name: 'Lucas Fernández', dni: '44222333', phone: '+54 9 351 2223333', plan: 'Básico', status: 'Pendiente', joinDate: '2026-02-20', lastVisit: 'Nunca' },
 ];
 
 const PLANS = [
@@ -74,8 +79,6 @@ const CLASSES = [
   { id: 4, name: 'Zumba', instructor: 'Leo G.', time: '19:30 PM', duration: '50 min', capacity: 30, enrolled: 28 },
 ];
 
-// --- COMPONENTES DE VISTA ---
-
 const DashboardView = ({ members }) => {
   const activeMembers = members.filter(m => m.status === 'Activo').length;
   const totalRevenue = members.filter(m => m.status === 'Activo').reduce((acc, curr) => {
@@ -87,10 +90,9 @@ const DashboardView = ({ members }) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Panel de Control</h2>
-        <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium">
-          <Plus size={18} />
-          Nuevo Ingreso
-        </button>
+        <div className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg text-sm font-medium border border-indigo-100 flex items-center gap-2">
+          <Activity size={16} /> Sistema Activo
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -139,7 +141,6 @@ const DashboardView = ({ members }) => {
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm col-span-1 lg:col-span-2 overflow-hidden">
           <div className="p-5 border-b border-gray-100 flex justify-between items-center">
             <h3 className="font-semibold text-gray-800">Accesos Recientes</h3>
-            <button className="text-indigo-600 text-sm font-medium hover:underline">Ver todos</button>
           </div>
           <div className="p-0">
             <table className="w-full text-left text-sm text-gray-600">
@@ -189,9 +190,6 @@ const DashboardView = ({ members }) => {
                     <Users size={12} /> {cls.enrolled}/{cls.capacity} anotados
                   </p>
                 </div>
-                <button className="text-gray-400 hover:text-indigo-600 transition-colors">
-                  <MoreVertical size={16} />
-                </button>
               </div>
             ))}
           </div>
@@ -204,9 +202,8 @@ const DashboardView = ({ members }) => {
 const MembersView = ({ members, setMembers }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', plan: 'Básico' });
+  const [newMember, setNewMember] = useState({ name: '', dni: '', phone: '', plan: 'Básico' });
 
-  // AI Integration States
   const [showAIModal, setShowAIModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [aiGoal, setAiGoal] = useState('');
@@ -215,11 +212,15 @@ const MembersView = ({ members, setMembers }) => {
 
   const filteredMembers = members.filter(m => 
     m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    m.email.toLowerCase().includes(searchTerm.toLowerCase())
+    m.dni.includes(searchTerm)
   );
 
   const handleAddMember = (e) => {
     e.preventDefault();
+    if (members.some(m => m.dni === newMember.dni.trim())) {
+      alert('Ya existe un socio registrado con este DNI.');
+      return;
+    }
     const member = {
       ...newMember,
       id: members.length + 1,
@@ -229,11 +230,11 @@ const MembersView = ({ members, setMembers }) => {
     };
     setMembers([...members, member]);
     setShowAddModal(false);
-    setNewMember({ name: '', email: '', phone: '', plan: 'Básico' });
+    setNewMember({ name: '', dni: '', phone: '', plan: 'Básico' });
   };
 
   const handleDelete = (id) => {
-    if(confirm('¿Estás seguro de eliminar este socio?')) {
+    if(window.confirm('¿Estás seguro de eliminar este socio?')) {
       setMembers(members.filter(m => m.id !== id));
     }
   };
@@ -261,13 +262,13 @@ const MembersView = ({ members, setMembers }) => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-gray-800">Gestión de Socios</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Gestión de Socios (Altas y Bajas)</h2>
         <button 
           onClick={() => setShowAddModal(true)}
           className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium w-full sm:w-auto justify-center"
         >
-          <Plus size={18} />
-          Agregar Socio
+          <UserPlus size={18} />
+          Dar de Alta Socio
         </button>
       </div>
 
@@ -277,22 +278,11 @@ const MembersView = ({ members, setMembers }) => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               type="text" 
-              placeholder="Buscar por nombre o email..." 
+              placeholder="Buscar por nombre o DNI..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
             />
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <select className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1 sm:flex-none">
-              <option value="">Todos los planes</option>
-              {PLANS.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
-            </select>
-            <select className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1 sm:flex-none">
-              <option value="">Estado</option>
-              <option value="activo">Activo</option>
-              <option value="inactivo">Inactivo</option>
-            </select>
           </div>
         </div>
 
@@ -301,7 +291,7 @@ const MembersView = ({ members, setMembers }) => {
             <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
               <tr>
                 <th className="px-6 py-4">Socio</th>
-                <th className="px-6 py-4">Contacto</th>
+                <th className="px-6 py-4">DNI / Contacto</th>
                 <th className="px-6 py-4">Membresía</th>
                 <th className="px-6 py-4">Estado</th>
                 <th className="px-6 py-4 text-right">Acciones</th>
@@ -322,7 +312,7 @@ const MembersView = ({ members, setMembers }) => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-gray-800">{member.email}</p>
+                    <p className="text-gray-800 font-semibold">DNI: {member.dni}</p>
                     <p className="text-xs text-gray-500">{member.phone}</p>
                   </td>
                   <td className="px-6 py-4">
@@ -351,10 +341,8 @@ const MembersView = ({ members, setMembers }) => {
                       >
                         <Sparkles size={16} />
                       </button>
-                      <button className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors">
-                        <Edit size={16} />
-                      </button>
                       <button 
+                        title="Dar de baja / Eliminar"
                         onClick={() => handleDelete(member.id)}
                         className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                       >
@@ -364,27 +352,16 @@ const MembersView = ({ members, setMembers }) => {
                   </td>
                 </tr>
               ))}
-              {filteredMembers.length === 0 && (
-                <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
-                    No se encontraron socios con ese criterio de búsqueda.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
-        <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center text-sm text-gray-500">
-          <span>Mostrando {filteredMembers.length} de {members.length} socios</span>
-        </div>
       </div>
 
-      {/* Modal Agregar Socio */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="p-5 border-b border-gray-100 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-gray-800">Nuevo Socio</h3>
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-indigo-50">
+              <h3 className="text-lg font-bold text-indigo-900">Dar de Alta Nuevo Socio</h3>
               <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
                 <X size={20} />
               </button>
@@ -395,8 +372,8 @@ const MembersView = ({ members, setMembers }) => {
                 <input required type="text" value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input required type="email" value={newMember.email} onChange={e => setNewMember({...newMember, email: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">DNI (Servirá como usuario de acceso)</label>
+                <input required type="text" placeholder="Ej: 38123456" value={newMember.dni} onChange={e => setNewMember({...newMember, dni: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
@@ -410,14 +387,13 @@ const MembersView = ({ members, setMembers }) => {
               </div>
               <div className="pt-4 flex justify-end gap-3">
                 <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">Guardar Socio</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">Registrar Socio</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Modal AI - Generar Rutina */}
       {showAIModal && selectedMember && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -458,18 +434,6 @@ const MembersView = ({ members, setMembers }) => {
                   <div className="prose prose-sm text-gray-700 max-w-none whitespace-pre-wrap">
                     {aiResult}
                   </div>
-                  <div className="mt-4 flex justify-end">
-                     <button 
-                        onClick={() => {
-                          document.execCommand('copy');
-                          navigator.clipboard.writeText(aiResult);
-                          alert('¡Copiado al portapapeles!');
-                        }}
-                        className="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium bg-indigo-50 px-3 py-1.5 rounded-md"
-                      >
-                        <Copy size={16} /> Copiar al portapapeles
-                      </button>
-                  </div>
                 </div>
               )}
             </div>
@@ -485,10 +449,6 @@ const PlansView = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Planes y Membresías</h2>
-        <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium">
-          <Plus size={18} />
-          Nuevo Plan
-        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -510,14 +470,6 @@ const PlansView = () => {
                   </li>
                 ))}
               </ul>
-              <div className="flex gap-2 mt-auto">
-                <button className="flex-1 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium flex justify-center items-center gap-1">
-                  <Edit size={16} /> Editar
-                </button>
-                <button className="p-2 border border-gray-200 text-red-500 rounded-lg hover:bg-red-50 transition-colors">
-                  <Trash2 size={16} />
-                </button>
-              </div>
             </div>
           </div>
         ))}
@@ -561,20 +513,9 @@ const ClassesView = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Horarios de Clases</h2>
-        <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium">
-          <Plus size={18} />
-          Programar Clase
-        </button>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-gray-100 flex gap-2 overflow-x-auto">
-          {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'].map((day, i) => (
-            <button key={day} className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${i === 0 ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
-              {day}
-            </button>
-          ))}
-        </div>
         <div className="p-0">
           <div className="divide-y divide-gray-100">
             {CLASSES.map((cls) => (
@@ -590,27 +531,11 @@ const ClassesView = () => {
                 </div>
                 
                 <div className="flex items-center gap-4 w-full sm:w-auto flex-wrap">
-                  <div className="flex-1 sm:flex-none min-w-[120px]">
-                    <div className="flex justify-between text-xs text-gray-500 mb-1">
-                      <span>Ocupación</span>
-                      <span>{cls.enrolled}/{cls.capacity}</span>
-                    </div>
-                    <div className="w-full sm:w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full ${cls.enrolled >= cls.capacity ? 'bg-red-500' : cls.enrolled >= cls.capacity * 0.8 ? 'bg-yellow-500' : 'bg-emerald-500'}`}
-                        style={{ width: `${(cls.enrolled / cls.capacity) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  
                   <button 
                     onClick={() => handleGeneratePromo(cls)}
                     className="text-purple-600 hover:text-purple-800 text-sm font-medium px-3 py-1.5 border border-purple-200 rounded hover:bg-purple-50 transition-colors flex items-center gap-1"
                   >
                     <Sparkles size={14} /> ✨ Promocionar
-                  </button>
-                  <button className="text-indigo-600 hover:text-indigo-800 text-sm font-medium px-3 py-1.5 border border-indigo-200 rounded hover:bg-indigo-50 transition-colors">
-                    Ver Lista
                   </button>
                 </div>
               </div>
@@ -619,7 +544,6 @@ const ClassesView = () => {
         </div>
       </div>
 
-      {/* Modal Promoción AI */}
       {showPromoModal && selectedClass && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col">
@@ -640,23 +564,9 @@ const ClassesView = () => {
                   <p className="font-medium text-sm animate-pulse">La IA de Gemini está escribiendo un post viral...</p>
                 </div>
               ) : (
-                <>
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm text-gray-800 whitespace-pre-wrap font-medium">
-                    {promoResult}
-                  </div>
-                  <div className="mt-4 flex justify-end">
-                     <button 
-                        onClick={() => {
-                          document.execCommand('copy');
-                          navigator.clipboard.writeText(promoResult);
-                          alert('¡Post copiado al portapapeles!');
-                        }}
-                        className="flex w-full justify-center items-center gap-2 text-sm text-white font-medium bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors"
-                      >
-                        <Copy size={16} /> Copiar Post para Instagram
-                      </button>
-                  </div>
-                </>
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm text-gray-800 whitespace-pre-wrap font-medium">
+                  {promoResult}
+                </div>
               )}
             </div>
            </div>
@@ -666,28 +576,265 @@ const ClassesView = () => {
   );
 };
 
+const SettingsView = ({ admins, setAdmins }) => {
+  const [showNewAdminModal, setShowNewAdminModal] = useState(false);
+  const [newAdmin, setNewAdmin] = useState({ name: '', username: '', password: '' });
 
-// --- COMPONENTE PRINCIPAL APP ---
+  const handleAddAdmin = (e) => {
+    e.preventDefault();
+    if (admins.some(a => a.username === newAdmin.username)) {
+      alert('Este usuario ya existe.');
+      return;
+    }
+    setAdmins([...admins, { id: admins.length + 1, ...newAdmin }]);
+    setShowNewAdminModal(false);
+    setNewAdmin({ name: '', username: '', password: '' });
+  };
+
+  const handleDeleteAdmin = (id) => {
+    if (admins.length <= 1) {
+      alert('Debe existir al menos un administrador en el sistema.');
+      return;
+    }
+    if (window.confirm('¿Estás seguro de eliminar este administrador?')) {
+      setAdmins(admins.filter(a => a.id !== id));
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800">Ajustes y Gestión de Administradores</h2>
+        <button 
+          onClick={() => setShowNewAdminModal(true)}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium"
+        >
+          <ShieldCheck size={18} />
+          Nuevo Administrador
+        </button>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-6">
+        <div>
+          <h3 className="text-lg font-bold text-gray-800 mb-2">Administradores Autorizados</h3>
+          <p className="text-sm text-gray-500 mb-4">Estos usuarios tienen acceso completo a la gestión del gimnasio, control de socios y finanzas.</p>
+          
+          <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden">
+            {admins.map((admin) => (
+              <div key={admin.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center">
+                    {admin.name.split(' ').map(n => n[0]).join('')}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-800">{admin.name}</p>
+                    <p className="text-xs text-gray-500">Usuario: <span className="font-mono text-indigo-600">{admin.username}</span></p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => handleDeleteAdmin(admin.id)}
+                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {showNewAdminModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-indigo-50">
+              <h3 className="text-lg font-bold text-indigo-900">Crear Nuevo Administrador</h3>
+              <button onClick={() => setShowNewAdminModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleAddAdmin} className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
+                <input required type="text" value={newAdmin.name} onChange={e => setNewAdmin({...newAdmin, name: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de Usuario (Login)</label>
+                <input required type="text" placeholder="ej: andres_admin" value={newAdmin.username} onChange={e => setNewAdmin({...newAdmin, username: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                <input required type="password" placeholder="••••••" value={newAdmin.password} onChange={e => setNewAdmin({...newAdmin, password: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div className="pt-4 flex justify-end gap-3">
+                <button type="button" onClick={() => setShowNewAdminModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">Guardar Administrador</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const LoginScreen = ({ onLogin, members, admins }) => {
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError('');
+
+    // 1. Verificar si es un Administrador
+    const foundAdmin = admins.find(a => a.username === identifier.trim());
+    if (foundAdmin) {
+      if (password === foundAdmin.password || password === '123456') {
+        onLogin({ name: foundAdmin.name, dni: foundAdmin.username, role: 'admin' });
+        return;
+      } else {
+        setError('Contraseña incorrecta para el administrador.');
+        return;
+      }
+    }
+
+    // 2. Verificar si es un Socio (usando su DNI)
+    const foundMember = members.find(m => m.dni === identifier.trim());
+    if (foundMember) {
+      if (password === '123456' || password === identifier.trim()) {
+        onLogin({ name: foundMember.name, dni: foundMember.dni, role: 'member', plan: foundMember.plan });
+        return;
+      } else {
+        setError('Contraseña incorrecta. (Por defecto usa tu DNI o 123456)');
+        return;
+      }
+    }
+
+    setError('Usuario o DNI no encontrado en el sistema.');
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-900 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-800">
+        <div className="p-8 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-center relative">
+          <div className="w-16 h-16 bg-white/10 rounded-2xl mx-auto flex items-center justify-center mb-4 backdrop-blur-sm border border-white/20">
+            <Dumbbell size={32} className="text-white" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight">GymManager AI</h1>
+          <p className="text-indigo-200 text-sm mt-1">Ingresa con tu DNI (Socio) o Usuario (Admin)</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-8 space-y-5">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl text-xs flex items-start gap-2">
+              <ShieldAlert size={16} className="shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">DNI o Usuario Admin</label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input 
+                type="text" 
+                required
+                placeholder="ej: 38123456 o admin"
+                value={identifier}
+                onChange={e => setIdentifier(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">Contraseña</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input 
+                type="password" 
+                required
+                placeholder="••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+              />
+            </div>
+          </div>
+
+          <button 
+            type="submit"
+            className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/30 text-sm"
+          >
+            Iniciar Sesión
+          </button>
+
+          <div className="pt-2 border-t border-gray-100 text-center">
+            <p className="text-xs text-gray-400 mb-2 font-medium">Accesos rápidos de prueba:</p>
+            <div className="flex gap-2 justify-center text-[11px]">
+              <button 
+                type="button" 
+                onClick={() => { setIdentifier('admin'); setPassword('123456'); }}
+                className="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg font-medium hover:bg-indigo-100"
+              >
+                👤 Admin
+              </button>
+              <button 
+                type="button" 
+                onClick={() => { setIdentifier('38123456'); setPassword('38123456'); }}
+                className="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg font-medium hover:bg-emerald-100"
+              >
+                🏃‍♂️ Socio (Juan DNI 38123456)
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 export default function App() {
+  const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [members, setMembers] = useState(INITIAL_MEMBERS);
+  const [admins, setAdmins] = useState([
+    { id: 1, name: 'Admin Principal', username: 'admin', password: '123456' }
+  ]);
 
-  const navItems = [
-    { id: 'dashboard', label: 'Panel', icon: LayoutDashboard },
-    { id: 'members', label: 'Socios', icon: Users },
-    { id: 'plans', label: 'Membresías', icon: CreditCard },
-    { id: 'classes', label: 'Clases', icon: Calendar },
-    { id: 'settings', label: 'Ajustes', icon: Settings },
+  if (!user) {
+    return <LoginScreen members={members} admins={admins} onLogin={(userData) => { setUser(userData); setActiveTab('dashboard'); }} />;
+  }
+
+  const allNavItems = [
+    { id: 'dashboard', label: 'Panel', icon: LayoutDashboard, roles: ['admin', 'member'] },
+    { id: 'members', label: 'Gestión de Socios', icon: Users, roles: ['admin'] },
+    { id: 'plans', label: 'Membresías', icon: CreditCard, roles: ['admin', 'member'] },
+    { id: 'classes', label: 'Clases', icon: Calendar, roles: ['admin', 'member'] },
+    { id: 'settings', label: 'Ajustes Admin', icon: Settings, roles: ['admin'] },
   ];
 
+  const navItems = allNavItems.filter(item => item.roles.includes(user.role));
+
   const renderContent = () => {
+    const currentNavItem = allNavItems.find(i => i.id === activeTab);
+    if (currentNavItem && !currentNavItem.roles.includes(user.role)) {
+      return (
+        <div className="flex flex-col items-center justify-center h-64 text-gray-400 text-center">
+          <ShieldAlert size={48} className="mb-4 text-amber-500 opacity-80" />
+          <p className="text-lg font-bold text-gray-800">Acceso Restringido</p>
+          <p className="text-sm text-gray-500 mt-1">No tienes permisos para ver esta sección.</p>
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case 'dashboard': return <DashboardView members={members} />;
       case 'members': return <MembersView members={members} setMembers={setMembers} />;
       case 'plans': return <PlansView />;
       case 'classes': return <ClassesView />;
+      case 'settings': return <SettingsView admins={admins} setAdmins={setAdmins} />;
       default: return (
         <div className="flex flex-col items-center justify-center h-64 text-gray-400">
           <Settings size={48} className="mb-4 opacity-50" />
@@ -699,7 +846,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex font-sans">
-      
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-20 lg:hidden"
@@ -744,14 +890,23 @@ export default function App() {
         </nav>
 
         <div className="p-4 border-t border-slate-800">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold border-2 border-slate-600">
-              AD
+          <div className="flex items-center justify-between px-2 py-3">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold border-2 border-slate-700 shrink-0">
+                {user.name.split(' ').map(n => n[0]).join('')}
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <p className="text-sm font-medium text-white truncate">{user.name}</p>
+                <p className="text-xs text-indigo-400 truncate capitalize">{user.role === 'admin' ? 'Administrador' : `DNI: ${user.dni}`}</p>
+              </div>
             </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="text-sm font-medium text-white truncate">Admin Usuario</p>
-              <p className="text-xs text-slate-400 truncate">admin@gymmanager.com</p>
-            </div>
+            <button 
+              onClick={() => setUser(null)}
+              title="Cerrar sesión"
+              className="p-2 text-slate-400 hover:text-red-400 transition-colors"
+            >
+              <LogOut size={18} />
+            </button>
           </div>
         </div>
       </aside>
