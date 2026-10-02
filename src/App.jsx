@@ -1,0 +1,781 @@
+import React, { useState, useMemo } from 'react';
+import { 
+  LayoutDashboard, 
+  Users, 
+  CreditCard, 
+  Calendar, 
+  Settings, 
+  Plus, 
+  Search, 
+  Edit, 
+  Trash2, 
+  Activity, 
+  TrendingUp, 
+  Dumbbell, 
+  Menu, 
+  X,
+  CheckCircle2,
+  XCircle,
+  MoreVertical,
+  Clock,
+  Sparkles,
+  Loader2,
+  Copy
+} from 'lucide-react';
+
+// --- UTILIDAD DE API GEMINI ---
+const callGeminiAPI = async (prompt) => {
+  const apiKey = ""; // Se inyecta automáticamente en el entorno de ejecución
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+  const payload = {
+    contents: [{ parts: [{ text: prompt }] }],
+    systemInstruction: {
+      parts: [{ text: "Eres un asistente experto para la gestión de un gimnasio. Responde de forma profesional, motivadora y estructurada." }]
+    }
+  };
+
+  const delays = [1000, 2000, 4000, 8000, 16000];
+  for (let i = 0; i < 5; i++) {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error('Error en la API de Gemini');
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || "No se generó ninguna respuesta.";
+    } catch (error) {
+      if (i === 4) throw new Error('Fallo al conectar con Gemini tras varios intentos.');
+      await new Promise(res => setTimeout(res, delays[i]));
+    }
+  }
+};
+
+// --- DATOS DE PRUEBA (MOCK DATA) ---
+const INITIAL_MEMBERS = [
+  { id: 1, name: 'Juan Pérez', email: 'juan.p@email.com', phone: '+54 9 351 1234567', plan: 'Premium', status: 'Activo', joinDate: '2025-01-15', lastVisit: 'Hoy, 08:30 AM' },
+  { id: 2, name: 'María Gómez', email: 'maria.g@email.com', phone: '+54 9 351 7654321', plan: 'Básico', status: 'Activo', joinDate: '2025-02-01', lastVisit: 'Ayer, 18:45 PM' },
+  { id: 3, name: 'Carlos Rodríguez', email: 'carlos.r@email.com', phone: '+54 9 351 5556666', plan: 'Crossfit', status: 'Inactivo', joinDate: '2024-11-20', lastVisit: 'Hace 2 semanas' },
+  { id: 4, name: 'Ana Martínez', email: 'ana.m@email.com', phone: '+54 9 351 9998888', plan: 'Premium', status: 'Activo', joinDate: '2025-10-05', lastVisit: 'Hoy, 07:00 AM' },
+  { id: 5, name: 'Lucas Fernández', email: 'lucas.f@email.com', phone: '+54 9 351 2223333', plan: 'Básico', status: 'Pendiente', joinDate: '2026-02-20', lastVisit: 'Nunca' },
+];
+
+const PLANS = [
+  { id: 1, name: 'Básico', price: 25000, features: ['Acceso a sala de musculación', 'Horario de 08:00 a 16:00', 'Vestuarios'], color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  { id: 2, name: 'Premium', price: 35000, features: ['Pase libre 24/7', 'Clases grupales incluidas', 'Asesoramiento nutricional', 'Toallas y lockers'], color: 'bg-purple-100 text-purple-700 border-purple-200' },
+  { id: 3, name: 'Crossfit', price: 32000, features: ['Acceso a Box', 'Clases dirigidas', 'Open Box', 'Seguimiento de RM'], color: 'bg-orange-100 text-orange-700 border-orange-200' },
+];
+
+const CLASSES = [
+  { id: 1, name: 'Spinning', instructor: 'Marta V.', time: '08:00 AM', duration: '45 min', capacity: 20, enrolled: 18 },
+  { id: 2, name: 'Crossfit (WOD)', instructor: 'Nico T.', time: '10:00 AM', duration: '60 min', capacity: 15, enrolled: 15 },
+  { id: 3, name: 'Yoga Vinyasa', instructor: 'Paz S.', time: '18:00 PM', duration: '60 min', capacity: 25, enrolled: 10 },
+  { id: 4, name: 'Zumba', instructor: 'Leo G.', time: '19:30 PM', duration: '50 min', capacity: 30, enrolled: 28 },
+];
+
+// --- COMPONENTES DE VISTA ---
+
+const DashboardView = ({ members }) => {
+  const activeMembers = members.filter(m => m.status === 'Activo').length;
+  const totalRevenue = members.filter(m => m.status === 'Activo').reduce((acc, curr) => {
+    const plan = PLANS.find(p => p.name === curr.plan);
+    return acc + (plan ? plan.price : 0);
+  }, 0);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800">Panel de Control</h2>
+        <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium">
+          <Plus size={18} />
+          Nuevo Ingreso
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+          <div className="bg-blue-100 p-3 rounded-lg text-blue-600">
+            <Users size={24} />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 font-medium">Socios Totales</p>
+            <p className="text-2xl font-bold text-gray-800">{members.length}</p>
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+          <div className="bg-emerald-100 p-3 rounded-lg text-emerald-600">
+            <Activity size={24} />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 font-medium">Socios Activos</p>
+            <p className="text-2xl font-bold text-gray-800">{activeMembers}</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+          <div className="bg-purple-100 p-3 rounded-lg text-purple-600">
+            <TrendingUp size={24} />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 font-medium">Ingresos Estimados</p>
+            <p className="text-2xl font-bold text-gray-800">${totalRevenue.toLocaleString('es-AR')}</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+          <div className="bg-orange-100 p-3 rounded-lg text-orange-600">
+            <CheckCircle2 size={24} />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 font-medium">Asistencias Hoy</p>
+            <p className="text-2xl font-bold text-gray-800">42</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm col-span-1 lg:col-span-2 overflow-hidden">
+          <div className="p-5 border-b border-gray-100 flex justify-between items-center">
+            <h3 className="font-semibold text-gray-800">Accesos Recientes</h3>
+            <button className="text-indigo-600 text-sm font-medium hover:underline">Ver todos</button>
+          </div>
+          <div className="p-0">
+            <table className="w-full text-left text-sm text-gray-600">
+              <thead className="bg-gray-50 text-gray-500 font-medium">
+                <tr>
+                  <th className="px-5 py-3">Socio</th>
+                  <th className="px-5 py-3">Plan</th>
+                  <th className="px-5 py-3">Hora</th>
+                  <th className="px-5 py-3">Estado</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {members.slice(0,4).map((m, i) => (
+                  <tr key={i} className="hover:bg-gray-50">
+                    <td className="px-5 py-3 font-medium text-gray-800">{m.name}</td>
+                    <td className="px-5 py-3">{m.plan}</td>
+                    <td className="px-5 py-3">{m.lastVisit}</td>
+                    <td className="px-5 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        m.status === 'Activo' ? 'bg-emerald-100 text-emerald-700' : 
+                        m.status === 'Inactivo' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                      }`}>
+                        {m.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="p-5 border-b border-gray-100">
+            <h3 className="font-semibold text-gray-800">Próximas Clases Hoy</h3>
+          </div>
+          <div className="p-5 space-y-4">
+            {CLASSES.map(cls => (
+              <div key={cls.id} className="flex items-start gap-4">
+                <div className="bg-indigo-50 text-indigo-700 rounded-lg p-2 text-center min-w-[60px]">
+                  <span className="block text-xs font-bold">{cls.time.split(' ')[0]}</span>
+                  <span className="block text-[10px] uppercase">{cls.time.split(' ')[1]}</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-800 text-sm">{cls.name}</h4>
+                  <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                    <Users size={12} /> {cls.enrolled}/{cls.capacity} anotados
+                  </p>
+                </div>
+                <button className="text-gray-400 hover:text-indigo-600 transition-colors">
+                  <MoreVertical size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const MembersView = ({ members, setMembers }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', plan: 'Básico' });
+
+  // AI Integration States
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [aiGoal, setAiGoal] = useState('');
+  const [aiResult, setAiResult] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const filteredMembers = members.filter(m => 
+    m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    m.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleAddMember = (e) => {
+    e.preventDefault();
+    const member = {
+      ...newMember,
+      id: members.length + 1,
+      status: 'Activo',
+      joinDate: new Date().toISOString().split('T')[0],
+      lastVisit: 'Nunca'
+    };
+    setMembers([...members, member]);
+    setShowAddModal(false);
+    setNewMember({ name: '', email: '', phone: '', plan: 'Básico' });
+  };
+
+  const handleDelete = (id) => {
+    if(confirm('¿Estás seguro de eliminar este socio?')) {
+      setMembers(members.filter(m => m.id !== id));
+    }
+  };
+
+  const handleGenerateRoutine = async () => {
+    if (!aiGoal) return alert("Por favor, ingresa el objetivo del socio.");
+    setIsGenerating(true);
+    setAiResult('');
+    
+    const prompt = `Actúa como un entrenador personal experto de primer nivel. Crea una rutina de entrenamiento semanal para el socio ${selectedMember.name}. 
+    Este socio tiene contratado el plan "${selectedMember.plan}". 
+    Su objetivo principal es: "${aiGoal}".
+    Haz que la rutina sea motivadora, incluye días de descanso, y usa formato markdown (viñetas, negritas) para que sea fácil de leer. No seas demasiado extenso, enfócate en lo accionable.`;
+
+    try {
+      const response = await callGeminiAPI(prompt);
+      setAiResult(response);
+    } catch (error) {
+      setAiResult("Hubo un error al generar la rutina. Por favor intenta nuevamente.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h2 className="text-2xl font-bold text-gray-800">Gestión de Socios</h2>
+        <button 
+          onClick={() => setShowAddModal(true)}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium w-full sm:w-auto justify-center"
+        >
+          <Plus size={18} />
+          Agregar Socio
+        </button>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-4 justify-between items-center bg-gray-50/50">
+          <div className="relative w-full sm:w-96">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input 
+              type="text" 
+              placeholder="Buscar por nombre o email..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+            />
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <select className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1 sm:flex-none">
+              <option value="">Todos los planes</option>
+              {PLANS.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+            </select>
+            <select className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1 sm:flex-none">
+              <option value="">Estado</option>
+              <option value="activo">Activo</option>
+              <option value="inactivo">Inactivo</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm text-gray-600">
+            <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-4">Socio</th>
+                <th className="px-6 py-4">Contacto</th>
+                <th className="px-6 py-4">Membresía</th>
+                <th className="px-6 py-4">Estado</th>
+                <th className="px-6 py-4 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredMembers.map((member) => (
+                <tr key={member.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs">
+                        {member.name.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">{member.name}</p>
+                        <p className="text-xs text-gray-500">Ingreso: {member.joinDate}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-gray-800">{member.email}</p>
+                    <p className="text-xs text-gray-500">{member.phone}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="font-medium text-gray-700">{member.plan}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${
+                      member.status === 'Activo' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+                      member.status === 'Inactivo' ? 'bg-red-50 text-red-700 border-red-200' : 
+                      'bg-yellow-50 text-yellow-700 border-yellow-200'
+                    }`}>
+                      {member.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        title="Generar rutina con IA"
+                        onClick={() => {
+                          setSelectedMember(member);
+                          setAiGoal('');
+                          setAiResult('');
+                          setShowAIModal(true);
+                        }}
+                        className="p-1.5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                      >
+                        <Sparkles size={16} />
+                      </button>
+                      <button className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors">
+                        <Edit size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(member.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filteredMembers.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                    No se encontraron socios con ese criterio de búsqueda.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center text-sm text-gray-500">
+          <span>Mostrando {filteredMembers.length} de {members.length} socios</span>
+        </div>
+      </div>
+
+      {/* Modal Agregar Socio */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center">
+              <h3 className="text-lg font-bold text-gray-800">Nuevo Socio</h3>
+              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleAddMember} className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
+                <input required type="text" value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input required type="email" value={newMember.email} onChange={e => setNewMember({...newMember, email: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                <input required type="tel" value={newMember.phone} onChange={e => setNewMember({...newMember, phone: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+                <select value={newMember.plan} onChange={e => setNewMember({...newMember, plan: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  {PLANS.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+                </select>
+              </div>
+              <div className="pt-4 flex justify-end gap-3">
+                <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">Guardar Socio</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal AI - Generar Rutina */}
+      {showAIModal && selectedMember && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-amber-50 to-orange-50">
+              <div className="flex items-center gap-2 text-amber-600">
+                <Sparkles size={20} />
+                <h3 className="text-lg font-bold">Generador de Rutina IA ✨</h3>
+              </div>
+              <button onClick={() => setShowAIModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-5 overflow-y-auto flex-1 space-y-4">
+              <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <p className="text-sm text-gray-600 mb-2">Generando rutina para <strong>{selectedMember.name}</strong> (Plan {selectedMember.plan})</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">¿Cuál es el objetivo principal del socio?</label>
+                <input 
+                  type="text" 
+                  placeholder="Ej: Bajar 5kg, ganar fuerza, mejorar cardio..." 
+                  value={aiGoal} 
+                  onChange={e => setAiGoal(e.target.value)} 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 mb-3" 
+                />
+                <button 
+                  onClick={handleGenerateRoutine}
+                  disabled={isGenerating}
+                  className="w-full px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 transition-colors text-sm font-bold flex justify-center items-center gap-2 disabled:opacity-70"
+                >
+                  {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+                  {isGenerating ? 'Generando Rutina...' : '✨ Generar Rutina Personalizada'}
+                </button>
+              </div>
+
+              {aiResult && (
+                <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
+                  <h4 className="font-bold text-gray-800 mb-3">Rutina Sugerida:</h4>
+                  <div className="prose prose-sm text-gray-700 max-w-none whitespace-pre-wrap">
+                    {aiResult}
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                     <button 
+                        onClick={() => {
+                          document.execCommand('copy');
+                          navigator.clipboard.writeText(aiResult);
+                          alert('¡Copiado al portapapeles!');
+                        }}
+                        className="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium bg-indigo-50 px-3 py-1.5 rounded-md"
+                      >
+                        <Copy size={16} /> Copiar al portapapeles
+                      </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const PlansView = () => {
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800">Planes y Membresías</h2>
+        <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium">
+          <Plus size={18} />
+          Nuevo Plan
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {PLANS.map((plan) => (
+          <div key={plan.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+            <div className={`p-4 border-b ${plan.color}`}>
+              <h3 className="text-xl font-bold">{plan.name}</h3>
+              <div className="mt-2 flex items-baseline gap-1">
+                <span className="text-3xl font-extrabold">${plan.price.toLocaleString('es-AR')}</span>
+                <span className="text-sm opacity-80">/mes</span>
+              </div>
+            </div>
+            <div className="p-6 flex-1 flex flex-col">
+              <ul className="space-y-3 flex-1 mb-6">
+                {plan.features.map((feature, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-gray-600 text-sm">
+                    <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex gap-2 mt-auto">
+                <button className="flex-1 py-2 border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium flex justify-center items-center gap-1">
+                  <Edit size={16} /> Editar
+                </button>
+                <button className="p-2 border border-gray-200 text-red-500 rounded-lg hover:bg-red-50 transition-colors">
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const ClassesView = () => {
+  const [showPromoModal, setShowPromoModal] = useState(false);
+  const [selectedClass, setSelectedClass] = useState(null);
+  const [promoResult, setPromoResult] = useState('');
+  const [isGeneratingPromo, setIsGeneratingPromo] = useState(false);
+
+  const handleGeneratePromo = async (cls) => {
+    setSelectedClass(cls);
+    setShowPromoModal(true);
+    setIsGeneratingPromo(true);
+    setPromoResult('');
+
+    const prompt = `Actúa como un experto en marketing de redes sociales para gimnasios. Escribe un post súper cautivador y enérgico para Instagram (incluyendo emojis y 5 hashtags relevantes) promocionando nuestra clase de "${cls.name}". 
+    Detalles de la clase:
+    - Horario: ${cls.time}
+    - Instructor: ${cls.instructor}
+    - Duración: ${cls.duration}
+    - Cupos disponibles: Quedan ${cls.capacity - cls.enrolled} lugares de ${cls.capacity}.
+    
+    Llama a la acción al final invitando a la gente a reservar su lugar.`;
+
+    try {
+      const response = await callGeminiAPI(prompt);
+      setPromoResult(response);
+    } catch (error) {
+      setPromoResult("Error al generar el texto de promoción.");
+    } finally {
+      setIsGeneratingPromo(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800">Horarios de Clases</h2>
+        <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium">
+          <Plus size={18} />
+          Programar Clase
+        </button>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-gray-100 flex gap-2 overflow-x-auto">
+          {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'].map((day, i) => (
+            <button key={day} className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${i === 0 ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
+              {day}
+            </button>
+          ))}
+        </div>
+        <div className="p-0">
+          <div className="divide-y divide-gray-100">
+            {CLASSES.map((cls) => (
+              <div key={cls.id} className="p-5 flex flex-col sm:flex-row gap-4 items-start sm:items-center hover:bg-gray-50 transition-colors">
+                <div className="bg-gray-100 text-gray-800 rounded-lg px-4 py-2 text-center min-w-[100px] flex items-center justify-center gap-2">
+                  <Clock size={16} className="text-gray-500" />
+                  <span className="font-bold">{cls.time}</span>
+                </div>
+                
+                <div className="flex-1">
+                  <h4 className="text-lg font-bold text-gray-800">{cls.name}</h4>
+                  <p className="text-sm text-gray-500 mt-1">Instructor: {cls.instructor} • {cls.duration}</p>
+                </div>
+                
+                <div className="flex items-center gap-4 w-full sm:w-auto flex-wrap">
+                  <div className="flex-1 sm:flex-none min-w-[120px]">
+                    <div className="flex justify-between text-xs text-gray-500 mb-1">
+                      <span>Ocupación</span>
+                      <span>{cls.enrolled}/{cls.capacity}</span>
+                    </div>
+                    <div className="w-full sm:w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full ${cls.enrolled >= cls.capacity ? 'bg-red-500' : cls.enrolled >= cls.capacity * 0.8 ? 'bg-yellow-500' : 'bg-emerald-500'}`}
+                        style={{ width: `${(cls.enrolled / cls.capacity) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  <button 
+                    onClick={() => handleGeneratePromo(cls)}
+                    className="text-purple-600 hover:text-purple-800 text-sm font-medium px-3 py-1.5 border border-purple-200 rounded hover:bg-purple-50 transition-colors flex items-center gap-1"
+                  >
+                    <Sparkles size={14} /> ✨ Promocionar
+                  </button>
+                  <button className="text-indigo-600 hover:text-indigo-800 text-sm font-medium px-3 py-1.5 border border-indigo-200 rounded hover:bg-indigo-50 transition-colors">
+                    Ver Lista
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Modal Promoción AI */}
+      {showPromoModal && selectedClass && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-purple-50 to-fuchsia-50">
+              <div className="flex items-center gap-2 text-purple-600">
+                <Sparkles size={20} />
+                <h3 className="text-lg font-bold">Post para Redes ✨</h3>
+              </div>
+              <button onClick={() => setShowPromoModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-5">
+              {isGeneratingPromo ? (
+                <div className="flex flex-col items-center justify-center py-10 space-y-3 text-purple-600">
+                  <Loader2 size={32} className="animate-spin" />
+                  <p className="font-medium text-sm animate-pulse">La IA de Gemini está escribiendo un post viral...</p>
+                </div>
+              ) : (
+                <>
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm text-gray-800 whitespace-pre-wrap font-medium">
+                    {promoResult}
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                     <button 
+                        onClick={() => {
+                          document.execCommand('copy');
+                          navigator.clipboard.writeText(promoResult);
+                          alert('¡Post copiado al portapapeles!');
+                        }}
+                        className="flex w-full justify-center items-center gap-2 text-sm text-white font-medium bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition-colors"
+                      >
+                        <Copy size={16} /> Copiar Post para Instagram
+                      </button>
+                  </div>
+                </>
+              )}
+            </div>
+           </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+// --- COMPONENTE PRINCIPAL APP ---
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [members, setMembers] = useState(INITIAL_MEMBERS);
+
+  const navItems = [
+    { id: 'dashboard', label: 'Panel', icon: LayoutDashboard },
+    { id: 'members', label: 'Socios', icon: Users },
+    { id: 'plans', label: 'Membresías', icon: CreditCard },
+    { id: 'classes', label: 'Clases', icon: Calendar },
+    { id: 'settings', label: 'Ajustes', icon: Settings },
+  ];
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard': return <DashboardView members={members} />;
+      case 'members': return <MembersView members={members} setMembers={setMembers} />;
+      case 'plans': return <PlansView />;
+      case 'classes': return <ClassesView />;
+      default: return (
+        <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+          <Settings size={48} className="mb-4 opacity-50" />
+          <p>Módulo en desarrollo...</p>
+        </div>
+      );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex font-sans">
+      
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      <aside className={`
+        fixed lg:static inset-y-0 left-0 z-30
+        w-64 bg-slate-900 text-slate-300 flex flex-col transition-transform duration-300 ease-in-out
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
+        <div className="p-6 flex items-center gap-3 text-white">
+          <div className="bg-indigo-500 p-2 rounded-lg">
+            <Dumbbell size={24} className="text-white" />
+          </div>
+          <span className="text-xl font-bold tracking-tight">GymManager AI</span>
+        </div>
+
+        <nav className="flex-1 px-4 py-6 space-y-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                  isActive 
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-900/20' 
+                    : 'hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                <Icon size={20} className={isActive ? 'text-white' : 'text-slate-400'} />
+                <span className="font-medium">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="p-4 border-t border-slate-800">
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold border-2 border-slate-600">
+              AD
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <p className="text-sm font-medium text-white truncate">Admin Usuario</p>
+              <p className="text-xs text-slate-400 truncate">admin@gymmanager.com</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <header className="lg:hidden bg-white border-b border-gray-200 p-4 flex items-center justify-between z-10">
+          <div className="flex items-center gap-2">
+            <Dumbbell size={24} className="text-indigo-600" />
+            <span className="text-lg font-bold text-gray-800">GymManager</span>
+          </div>
+          <button 
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+          >
+            <Menu size={24} />
+          </button>
+        </header>
+
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            {renderContent()}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
