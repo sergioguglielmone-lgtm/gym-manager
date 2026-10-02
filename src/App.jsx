@@ -29,7 +29,9 @@ import {
   Key,
   ShieldCheck,
   Cake,
-  Phone
+  Phone,
+  DollarSign,
+  FileText
 } from 'lucide-react';
 
 const callGeminiAPI = async (prompt) => {
@@ -68,10 +70,16 @@ const INITIAL_MEMBERS = [
   { id: 5, firstName: 'Lucas', lastName: 'Fernández', dni: '44222333', phone: '+54 9 351 2223333', birthday: '1997-09-30', plan: 'Básico', status: 'Pendiente', joinDate: '2026-02-20', lastVisit: 'Nunca' },
 ];
 
+const INITIAL_PAYMENTS = [
+  { id: 1, memberId: 1, date: '2026-03-01', amount: 30000, description: 'Cuota Marzo 2026', type: 'Pago' },
+  { id: 2, memberId: 2, date: '2026-03-02', amount: 30000, description: 'Cuota Marzo 2026', type: 'Pago' },
+  { id: 3, memberId: 3, date: '2026-02-10', amount: 30000, description: 'Cuota Febrero 2026', type: 'Pago' },
+];
+
 const PLANS = [
-  { id: 1, name: 'Básico', price: 25000, features: ['Acceso a sala de musculación', 'Horario de 08:00 a 16:00', 'Vestuarios'], color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  { id: 2, name: 'Premium', price: 35000, features: ['Pase libre 24/7', 'Clases grupales incluidas', 'Asesoramiento nutricional', 'Toallas y lockers'], color: 'bg-purple-100 text-purple-700 border-purple-200' },
-  { id: 3, name: 'Crossfit', price: 32000, features: ['Acceso a Box', 'Clases dirigidas', 'Open Box', 'Seguimiento de RM'], color: 'bg-orange-100 text-orange-700 border-orange-200' },
+  { id: 1, name: 'Básico', price: 30000, features: ['Acceso a sala de musculación', 'Horario de 08:00 a 16:00', 'Vestuarios'], color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  { id: 2, name: 'Premium', price: 30000, features: ['Pase libre 24/7', 'Clases grupales incluidas', 'Asesoramiento nutricional', 'Toallas y lockers'], color: 'bg-purple-100 text-purple-700 border-purple-200' },
+  { id: 3, name: 'Crossfit', price: 30000, features: ['Acceso a Box', 'Clases dirigidas', 'Open Box', 'Seguimiento de RM'], color: 'bg-orange-100 text-orange-700 border-orange-200' },
 ];
 
 const CLASSES = [
@@ -81,12 +89,9 @@ const CLASSES = [
   { id: 4, name: 'Zumba', instructor: 'Leo G.', time: '19:30 PM', duration: '50 min', capacity: 30, enrolled: 28 },
 ];
 
-const DashboardView = ({ members }) => {
+const DashboardView = ({ members, payments }) => {
   const activeMembers = members.filter(m => m.status === 'Activo').length;
-  const totalRevenue = members.filter(m => m.status === 'Activo').reduce((acc, curr) => {
-    const plan = PLANS.find(p => p.name === curr.plan);
-    return acc + (plan ? plan.price : 0);
-  }, 0);
+  const totalRevenue = payments.reduce((acc, curr) => acc + (curr.type === 'Pago' ? curr.amount : 0), 0);
 
   return (
     <div className="space-y-6">
@@ -123,7 +128,7 @@ const DashboardView = ({ members }) => {
             <TrendingUp size={24} />
           </div>
           <div>
-            <p className="text-sm text-gray-500 font-medium">Ingresos Estimados</p>
+            <p className="text-sm text-gray-500 font-medium">Ingresos Totales</p>
             <p className="text-2xl font-bold text-gray-800">${totalRevenue.toLocaleString('es-AR')}</p>
           </div>
         </div>
@@ -257,10 +262,8 @@ const MembersView = ({ members, setMembers }) => {
     e.preventDefault();
     
     if (editingMemberId) {
-      // Editar existente
       setMembers(members.map(m => m.id === editingMemberId ? { ...m, ...memberForm } : m));
     } else {
-      // Crear nuevo
       if (members.some(m => m.dni === memberForm.dni.trim())) {
         alert('Ya existe un socio registrado con este DNI.');
         return;
@@ -316,7 +319,7 @@ const MembersView = ({ members, setMembers }) => {
                 <th className="px-6 py-4">Socio</th>
                 <th className="px-6 py-4">DNI / Contacto</th>
                 <th className="px-6 py-4">Fecha Ingreso / Cumpleaños</th>
-                <th className="px-6 py-4">Membresía</th>
+                <th className="px-6 py-4">Plan</th>
                 <th className="px-6 py-4">Estado</th>
                 <th className="px-6 py-4 text-right">Acciones</th>
               </tr>
@@ -432,7 +435,7 @@ const MembersView = ({ members, setMembers }) => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Plan / Actividad</label>
                   <select value={memberForm.plan} onChange={e => setMemberForm({...memberForm, plan: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
                     {PLANS.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
                   </select>
@@ -461,36 +464,210 @@ const MembersView = ({ members, setMembers }) => {
   );
 };
 
-const PlansView = () => {
+const CurrentAccountView = ({ members, payments, setPayments }) => {
+  const [selectedMemberId, setSelectedMemberId] = useState(members[0]?.id || '');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({
+    date: new Date().toISOString().split('T')[0],
+    amount: 30000,
+    description: 'Cuota Mensual',
+    type: 'Pago'
+  });
+
+  const selectedMember = members.find(m => m.id === Number(selectedMemberId)) || members[0];
+
+  const memberPayments = payments.filter(p => p.memberId === Number(selectedMemberId));
+
+  // Cálculo de cuenta corriente (supongamos una cuota mensual fija de $30.000 generada al unirse o por mes)
+  // Para simplificar y hacerlo práctico: sumamos todos los Pagos registrados.
+  const totalPaid = memberPayments.filter(p => p.type === 'Pago').reduce((acc, curr) => acc + curr.amount, 0);
+  const totalCharges = memberPayments.filter(p => p.type === 'Cargo').reduce((acc, curr) => acc + curr.amount, 0);
+  const balance = totalPaid - totalCharges; // O saldo a favor / deuda según se defina. Aquí sumamos pagos.
+
+  const handleAddPayment = (e) => {
+    e.preventDefault();
+    const newPayment = {
+      id: payments.length > 0 ? Math.max(...payments.map(p => p.id)) + 1 : 1,
+      memberId: Number(selectedMemberId),
+      date: paymentForm.date,
+      amount: Number(paymentForm.amount),
+      description: paymentForm.description,
+      type: paymentForm.type
+    };
+    setPayments([newPayment, ...payments]);
+    setShowPaymentModal(false);
+    setPaymentForm({
+      date: new Date().toISOString().split('T')[0],
+      amount: 30000,
+      description: 'Cuota Mensual',
+      type: 'Pago'
+    });
+  };
+
+  const handleDeletePayment = (id) => {
+    if (window.confirm('¿Eliminar este registro de cuenta corriente?')) {
+      setPayments(payments.filter(p => p.id !== id));
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800">Planes y Membresías</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Cuenta Corriente de Socios</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Control de pagos y valor fijo de cuota sin importar la actividad.</p>
+        </div>
+        <button 
+          onClick={() => setShowPaymentModal(true)}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium"
+        >
+          <DollarSign size={18} />
+          Registrar Movimiento (Pago / Cargo)
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {PLANS.map((plan) => (
-          <div key={plan.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow">
-            <div className={`p-4 border-b ${plan.color}`}>
-              <h3 className="text-xl font-bold">{plan.name}</h3>
-              <div className="mt-2 flex items-baseline gap-1">
-                <span className="text-3xl font-extrabold">${plan.price.toLocaleString('es-AR')}</span>
-                <span className="text-sm opacity-80">/mes</span>
-              </div>
-            </div>
-            <div className="p-6 flex-1 flex flex-col">
-              <ul className="space-y-3 flex-1 mb-6">
-                {plan.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-gray-600 text-sm">
-                    <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Selector de Socio */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4 lg:col-span-1">
+          <h3 className="font-semibold text-gray-800 text-sm uppercase tracking-wider">Seleccionar Socio</h3>
+          <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+            {members.map(m => {
+              const isSelected = m.id === Number(selectedMemberId);
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setSelectedMemberId(m.id)}
+                  className={`w-full text-left p-3 rounded-xl transition-all flex items-center justify-between border ${
+                    isSelected 
+                      ? 'bg-indigo-50 border-indigo-200 text-indigo-900 shadow-sm' 
+                      : 'bg-white border-gray-100 hover:bg-gray-50 text-gray-700'
+                  }`}
+                >
+                  <div>
+                    <p className="font-bold text-sm">{m.firstName} {m.lastName}</p>
+                    <p className="text-xs opacity-75">DNI: {m.dni} • Plan: {m.plan}</p>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    m.status === 'Activo' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {m.status}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-        ))}
+        </div>
+
+        {/* Detalle de Cuenta Corriente */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 lg:col-span-2 space-y-6">
+          {selectedMember ? (
+            <>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 border-b border-gray-100 gap-4">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-800">{selectedMember.firstName} {selectedMember.lastName}</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">DNI: {selectedMember.dni} | Tel: {selectedMember.phone}</p>
+                </div>
+                <div className="bg-slate-900 text-white px-4 py-2.5 rounded-xl text-right">
+                  <span className="block text-[10px] uppercase tracking-wider text-slate-400 font-medium">Total Acumulado Pagado</span>
+                  <span className="text-lg font-bold text-emerald-400">${totalPaid.toLocaleString('es-AR')}</span>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-800 text-sm mb-3">Historial de Pagos y Movimientos</h4>
+                <div className="border border-gray-200 rounded-xl overflow-hidden">
+                  <table className="w-full text-left text-sm text-gray-600">
+                    <thead className="bg-gray-50 text-gray-500 font-medium border-b border-gray-200 text-xs">
+                      <tr>
+                        <th className="px-4 py-3">Fecha</th>
+                        <th className="px-4 py-3">Descripción</th>
+                        <th className="px-4 py-3">Tipo</th>
+                        <th className="px-4 py-3 text-right">Monto</th>
+                        <th className="px-4 py-3 text-right">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {memberPayments.length > 0 ? (
+                        memberPayments.map(p => (
+                          <tr key={p.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-xs text-gray-500">{p.date}</td>
+                            <td className="px-4 py-3 font-medium text-gray-800">{p.description}</td>
+                            <td className="px-4 py-3">
+                              <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                                p.type === 'Pago' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                              }`}>
+                                {p.type}
+                              </span>
+                            </td>
+                            <td className={`px-4 py-3 text-right font-bold ${p.type === 'Pago' ? 'text-emerald-600' : 'text-red-600'}`}>
+                              {p.type === 'Pago' ? '+' : '-'}${p.amount.toLocaleString('es-AR')}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <button 
+                                onClick={() => handleDeletePayment(p.id)}
+                                className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="5" className="px-4 py-8 text-center text-gray-400 text-xs">
+                            No hay movimientos registrados para este socio.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-gray-400 text-center py-10">Selecciona un socio para ver su cuenta corriente.</p>
+          )}
+        </div>
       </div>
+
+      {showPaymentModal && selectedMember && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-indigo-50">
+              <h3 className="text-lg font-bold text-indigo-900">Registrar Movimiento - {selectedMember.firstName}</h3>
+              <button onClick={() => setShowPaymentModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleAddPayment} className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Movimiento</label>
+                <select value={paymentForm.type} onChange={e => setPaymentForm({...paymentForm, type: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                  <option value="Pago">Pago (Ingreso)</option>
+                  <option value="Cargo">Cargo (Deuda / Cuota)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Monto ($)</label>
+                <input required type="number" value={paymentForm.amount} onChange={e => setPaymentForm({...paymentForm, amount: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                <p className="text-[11px] text-gray-500 mt-1">💡 Valor fijo sugerido de cuota: $30.000</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                <input required type="text" placeholder="Ej: Cuota Marzo 2026" value={paymentForm.description} onChange={e => setPaymentForm({...paymentForm, description: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                <input required type="date" value={paymentForm.date} onChange={e => setPaymentForm({...paymentForm, date: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+              </div>
+              <div className="pt-4 flex justify-end gap-3">
+                <button type="button" onClick={() => setShowPaymentModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">Guardar Movimiento</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -703,7 +880,6 @@ const LoginScreen = ({ onLogin, members, admins }) => {
     e.preventDefault();
     setError('');
 
-    // 1. Verificar si es un Administrador
     const foundAdmin = admins.find(a => a.username === identifier.trim());
     if (foundAdmin) {
       if (password === foundAdmin.password || password === '123456') {
@@ -715,7 +891,6 @@ const LoginScreen = ({ onLogin, members, admins }) => {
       }
     }
 
-    // 2. Verificar si es un Socio (DNI)
     const foundMember = members.find(m => m.dni === identifier.trim());
     if (foundMember) {
       const phoneClean = foundMember.phone ? foundMember.phone.replace(/\D/g, '') : '';
@@ -819,13 +994,16 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
-  // Persistencia de Socios en LocalStorage
   const [members, setMembers] = useState(() => {
     const saved = localStorage.getItem('gym_members');
     return saved ? JSON.parse(saved) : INITIAL_MEMBERS;
   });
 
-  // Persistencia de Administradores en LocalStorage
+  const [payments, setPayments] = useState(() => {
+    const saved = localStorage.getItem('gym_payments');
+    return saved ? JSON.parse(saved) : INITIAL_PAYMENTS;
+  });
+
   const [admins, setAdmins] = useState(() => {
     const saved = localStorage.getItem('gym_admins');
     return saved ? JSON.parse(saved) : [
@@ -838,6 +1016,10 @@ export default function App() {
   }, [members]);
 
   useEffect(() => {
+    localStorage.setItem('gym_payments', JSON.stringify(payments));
+  }, [payments]);
+
+  useEffect(() => {
     localStorage.setItem('gym_admins', JSON.stringify(admins));
   }, [admins]);
 
@@ -848,7 +1030,7 @@ export default function App() {
   const allNavItems = [
     { id: 'dashboard', label: 'Panel', icon: LayoutDashboard, roles: ['admin', 'member'] },
     { id: 'members', label: 'Gestión de Socios', icon: Users, roles: ['admin'] },
-    { id: 'plans', label: 'Membresías', icon: CreditCard, roles: ['admin', 'member'] },
+    { id: 'payments', label: 'Cuenta Corriente', icon: CreditCard, roles: ['admin', 'member'] },
     { id: 'classes', label: 'Clases', icon: Calendar, roles: ['admin', 'member'] },
     { id: 'settings', label: 'Ajustes Admin', icon: Settings, roles: ['admin'] },
   ];
@@ -868,9 +1050,9 @@ export default function App() {
     }
 
     switch (activeTab) {
-      case 'dashboard': return <DashboardView members={members} />;
+      case 'dashboard': return <DashboardView members={members} payments={payments} />;
       case 'members': return <MembersView members={members} setMembers={setMembers} />;
-      case 'plans': return <PlansView />;
+      case 'payments': return <CurrentAccountView members={members} payments={payments} setPayments={setPayments} />;
       case 'classes': return <ClassesView />;
       case 'settings': return <SettingsView admins={admins} setAdmins={setAdmins} />;
       default: return (
