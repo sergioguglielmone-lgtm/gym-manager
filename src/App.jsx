@@ -3,7 +3,7 @@ import {
   LayoutDashboard, 
   Users, 
   CreditCard, 
-  Calendar, 
+  Dumbbell, 
   Settings, 
   Plus, 
   Search, 
@@ -11,58 +11,24 @@ import {
   Trash2, 
   Activity, 
   TrendingUp, 
-  Dumbbell, 
   Menu, 
   X,
   CheckCircle2,
   XCircle,
-  MoreVertical,
   Clock,
-  Sparkles,
-  Loader2,
-  Copy,
   Lock,
   User,
   LogOut,
   ShieldAlert,
   UserPlus,
-  Key,
   ShieldCheck,
   Cake,
-  Phone,
   DollarSign,
-  FileText,
   Check,
-  AlertCircle
+  AlertCircle,
+  FileText,
+  Eye
 } from 'lucide-react';
-
-const callGeminiAPI = async (prompt) => {
-  const apiKey = ""; // Se inyecta automáticamente en el entorno de ejecución
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-  const payload = {
-    contents: [{ parts: [{ text: prompt }] }],
-    systemInstruction: {
-      parts: [{ text: "Eres un asistente experto para la gestión de un gimnasio. Responde de forma profesional, motivadora y estructurada." }]
-    }
-  };
-
-  const delays = [1000, 2000, 4000, 8000, 16000];
-  for (let i = 0; i < 5; i++) {
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!response.ok) throw new Error('Error en la API de Gemini');
-      const data = await response.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || "No se generó ninguna respuesta.";
-    } catch (error) {
-      if (i === 4) throw new Error('Fallo al conectar con Gemini tras varios intentos.');
-      await new Promise(res => setTimeout(res, delays[i]));
-    }
-  }
-};
 
 const INITIAL_MEMBERS = [
   { id: 1, firstName: 'Juan', lastName: 'Pérez', dni: '38123456', phone: '+54 9 351 1234567', birthday: '1995-05-12', status: 'Activo', joinDate: '2026-01-15', lastVisit: 'Hoy, 08:30 AM' },
@@ -70,16 +36,35 @@ const INITIAL_MEMBERS = [
   { id: 3, firstName: 'Carlos', lastName: 'Rodríguez', dni: '35555666', phone: '+54 9 351 5556666', birthday: '1990-11-04', status: 'Inactivo', joinDate: '2025-11-20', lastVisit: 'Hace 2 semanas' },
 ];
 
-const INITIAL_LEDGER = {
-  // Ej: { "1-2026-03": { status: 'pagado', amount: 30000, note: '' } }
-};
+const INITIAL_LEDGER = {};
 
-const CLASSES = [
-  { id: 1, name: 'Spinning', instructor: 'Marta V.', time: '08:00 AM', duration: '45 min', capacity: 20, enrolled: 18 },
-  { id: 2, name: 'Crossfit (WOD)', instructor: 'Nico T.', time: '10:00 AM', duration: '60 min', capacity: 15, enrolled: 15 },
-  { id: 3, name: 'Yoga Vinyasa', instructor: 'Paz S.', time: '18:00 PM', duration: '60 min', capacity: 25, enrolled: 10 },
-  { id: 4, name: 'Zumba', instructor: 'Leo G.', time: '19:30 PM', duration: '50 min', capacity: 30, enrolled: 28 },
+const INITIAL_EXERCISES = [
+  { id: 1, name: 'Press de Banca con barra', muscle: 'Pecho', description: 'Ejercicio compuesto para pectoral, tríceps y hombro anterior.', iconType: 'bench' },
+  { id: 2, name: 'Apertura Plana con mancuernas', muscle: 'Pecho', description: 'Aislamiento para el desarrollo de la parte media del pectoral.', iconType: 'chest' },
+  { id: 3, name: 'Sentadilla con barra', muscle: 'Piernas', description: 'El ejercicio rey para cuádriceps, glúteos y core.', iconType: 'squat' },
+  { id: 4, name: 'Peso Muerto rumano', muscle: 'Isquiotibiales/Espalda', description: 'Fortalecimiento de cadena posterior, glúteos e lumbares.', iconType: 'deadlift' },
+  { id: 5, name: 'Dominadas en barra', muscle: 'Espalda', description: 'Tracción vertical para dorsal ancho y bíceps.', iconType: 'pullup' },
+  { id: 6, name: 'Remo con barra', muscle: 'Espalda', description: 'Remo inclinado para espesor de espalda alta y dorsal.', iconType: 'row' },
+  { id: 7, name: 'Press militar con barra', muscle: 'Hombros', description: 'Desarrollo de deltoides frontal, lateral y estabilidad.', iconType: 'shoulder' },
+  { id: 8, name: 'Curl de bíceps con mancuernas', muscle: 'Bíceps', description: 'Flexión de codo para hipertrofia de bíceps braquial.', iconType: 'biceps' },
+  { id: 9, name: 'Extensiones de tríceps en polea', muscle: 'Tríceps', description: 'Aislamiento para tríceps utilizando polea alta.', iconType: 'triceps' },
+  { id: 10, name: 'Elevaciones laterales', muscle: 'Hombros', description: 'Aislamiento para deltoides lateral (amplitud de hombros).', iconType: 'lateral' },
 ];
+
+const INITIAL_PLANS = {
+  // Ej: { "38123456": { day1: [{exerciseId: 1, series: '4 x 10'}], day2: [...] } }
+  "38123456": {
+    day1: [
+      { exerciseId: 1, series: '4 x 10' },
+      { exerciseId: 2, series: '3 x 12' },
+      { exerciseId: 9, series: '3 x 15' }
+    ],
+    day2: [
+      { exerciseId: 3, series: '4 x 8' },
+      { exerciseId: 4, series: '3 x 10' }
+    ]
+  }
+};
 
 const MONTHS = [
   { number: 1, name: 'Enero' },
@@ -96,10 +81,17 @@ const MONTHS = [
   { number: 12, name: 'Diciembre' },
 ];
 
+const ExerciseVisual = ({ type }) => {
+  return (
+    <div className="w-16 h-16 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 shadow-xs">
+      <Dumbbell size={28} className="animate-pulse" />
+    </div>
+  );
+};
+
 const DashboardView = ({ members, ledger }) => {
   const activeMembers = members.filter(m => m.status === 'Activo').length;
   
-  // Calcular recaudación total sumando los pagos de todos los meses de todos los socios
   const totalRevenue = useMemo(() => {
     let total = 0;
     Object.keys(ledger).forEach(key => {
@@ -162,60 +154,36 @@ const DashboardView = ({ members, ledger }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm col-span-1 lg:col-span-2 overflow-hidden">
-          <div className="p-5 border-b border-gray-100 flex justify-between items-center">
-            <h3 className="font-semibold text-gray-800">Accesos Recientes</h3>
-          </div>
-          <div className="p-0">
-            <table className="w-full text-left text-sm text-gray-600">
-              <thead className="bg-gray-50 text-gray-500 font-medium">
-                <tr>
-                  <th className="px-5 py-3">Socio</th>
-                  <th className="px-5 py-3">Hora</th>
-                  <th className="px-5 py-3">Estado</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {members.slice(0,4).map((m, i) => (
-                  <tr key={i} className="hover:bg-gray-50">
-                    <td className="px-5 py-3 font-medium text-gray-800">{m.firstName} {m.lastName}</td>
-                    <td className="px-5 py-3">{m.lastVisit || 'Hoy'}</td>
-                    <td className="px-5 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        m.status === 'Activo' ? 'bg-emerald-100 text-emerald-700' : 
-                        m.status === 'Inactivo' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
-                      }`}>
-                        {m.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-gray-100 flex justify-between items-center">
+          <h3 className="font-semibold text-gray-800">Accesos Recientes</h3>
         </div>
-
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-gray-100">
-            <h3 className="font-semibold text-gray-800">Próximas Clases Hoy</h3>
-          </div>
-          <div className="p-5 space-y-4">
-            {CLASSES.map(cls => (
-              <div key={cls.id} className="flex items-start gap-4">
-                <div className="bg-indigo-50 text-indigo-700 rounded-lg p-2 text-center min-w-[60px]">
-                  <span className="block text-xs font-bold">{cls.time.split(' ')[0]}</span>
-                  <span className="block text-[10px] uppercase">{cls.time.split(' ')[1]}</span>
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-800 text-sm">{cls.name}</h4>
-                  <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                    <Users size={12} /> {cls.enrolled}/{cls.capacity} anotados
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="p-0">
+          <table className="w-full text-left text-sm text-gray-600">
+            <thead className="bg-gray-50 text-gray-500 font-medium">
+              <tr>
+                <th className="px-5 py-3">Socio</th>
+                <th className="px-5 py-3">Hora</th>
+                <th className="px-5 py-3">Estado</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {members.slice(0,4).map((m, i) => (
+                <tr key={i} className="hover:bg-gray-50">
+                  <td className="px-5 py-3 font-medium text-gray-800">{m.firstName} {m.lastName}</td>
+                  <td className="px-5 py-3">{m.lastVisit || 'Hoy'}</td>
+                  <td className="px-5 py-3">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      m.status === 'Activo' ? 'bg-emerald-100 text-emerald-700' : 
+                      m.status === 'Inactivo' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {m.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -466,24 +434,20 @@ const MembersView = ({ members, setMembers }) => {
 };
 
 const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
-  // Selector de año actual
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  // Si es admin, puede elegir qué socio ver. Si es socio, solo ve su propia cuenta.
   const initialMemberId = currentUser.role === 'admin' ? (members[0]?.id || '') : (members.find(m => m.dni === currentUser.dni)?.id || members[0]?.id || '');
   const [selectedMemberId, setSelectedMemberId] = useState(initialMemberId);
 
-  // Modal para Registrar Novedad
   const [showNovedadModal, setShowNovedadModal] = useState(false);
   const [activeMonthForNovedad, setActiveMonthForNovedad] = useState(null);
   const [novedadForm, setNovedadForm] = useState({
-    status: 'pagado', // pagado | sin_cargo | ausencia
+    status: 'pagado',
     amount: 30000,
     note: ''
   });
 
   const selectedMember = members.find(m => m.id === Number(selectedMemberId)) || members[0];
 
-  // Calcular deudas pendientes automáticas según la fecha de ingreso
   const getCalculatedMonthStatus = (member, year, monthNumber) => {
     if (!member || !member.joinDate) return { status: 'pendiente', amount: 30000, note: '' };
 
@@ -492,7 +456,6 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
     const currentYear = currentDate.getFullYear();
     const currentMonth = currentDate.getMonth() + 1;
 
-    // Si el mes/año es anterior a la fecha de ingreso del socio, no corresponde pagar
     if (year < joinYear || (year === joinYear && monthNumber < joinMonth)) {
       return { status: 'no_corresponde', amount: 0, note: 'Antes del alta' };
     }
@@ -502,34 +465,24 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
       return ledger[ledgerKey];
     }
 
-    // Si es un mes futuro al actual, todavía no adeuda
     if (year > currentYear || (year === currentYear && monthNumber > currentMonth)) {
       return { status: 'futuro', amount: 0, note: '' };
     }
 
-    // Por defecto, si el mes ya transcurrió o es el actual y no tiene registro, está PENDIENTE (Debe)
     return { status: 'pendiente', amount: 30000, note: '' };
   };
 
-  // Cálculo del Balance de Cuenta Corriente para el socio seleccionado en el año seleccionado
-  const memberBalance = useMemo(() => {
-    if (!selectedMember) return { totalOwed: 0, totalPaid: 0, balance: 0 };
-    
-    let totalOwed = 0;
-    let totalPaid = 0;
-
+  // Resumen: Solo Deuda Acumulada
+  const totalOwed = useMemo(() => {
+    if (!selectedMember) return 0;
+    let owed = 0;
     MONTHS.forEach(month => {
       const statusData = getCalculatedMonthStatus(selectedMember, selectedYear, month.number);
       if (statusData.status === 'pendiente') {
-        totalOwed += 30000;
-      } else if (statusData.status === 'pagado') {
-        totalPaid += Number(statusData.amount || 30000);
+        owed += 30000;
       }
     });
-
-    // Balance positivo = al día o a favor; Negativo = saldo deudor total
-    const balance = totalPaid - totalOwed;
-    return { totalOwed, totalPaid, balance };
+    return owed;
   }, [selectedMember, selectedYear, ledger]);
 
   const handleOpenNovedad = (month) => {
@@ -584,7 +537,6 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Selector de Socio (Solo visible para Administradores) */}
         {currentUser.role === 'admin' && (
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4 lg:col-span-1">
             <h3 className="font-semibold text-gray-800 text-sm uppercase tracking-wider">Seleccionar Socio</h3>
@@ -612,7 +564,6 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
           </div>
         )}
 
-        {/* Detalle de Meses del Año */}
         <div className={`bg-white rounded-xl border border-gray-100 shadow-sm p-6 ${currentUser.role === 'admin' ? 'lg:col-span-3' : 'lg:col-span-4'} space-y-6`}>
           {selectedMember ? (
             <>
@@ -627,21 +578,14 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
                 </div>
               </div>
 
-              {/* Resumen de Estado de Cuenta Corriente (Balance) */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 border border-slate-200 p-4 rounded-xl">
-                <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-xs">
-                  <p className="text-xs text-gray-500 font-medium">Total Pagado ({selectedYear})</p>
-                  <p className="text-lg font-bold text-emerald-600">${memberBalance.totalPaid.toLocaleString('es-AR')}</p>
+              {/* Resumen de Cuenta Corriente: Solo Deuda Acumulada */}
+              <div className="bg-red-50 border border-red-200 p-4 rounded-xl flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-red-600 font-semibold uppercase tracking-wider">Deuda Acumulada Total ({selectedYear})</p>
+                  <p className="text-2xl font-extrabold text-red-700 mt-0.5">${totalOwed.toLocaleString('es-AR')}</p>
                 </div>
-                <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-xs">
-                  <p className="text-xs text-gray-500 font-medium">Deuda Acumulada ({selectedYear})</p>
-                  <p className="text-lg font-bold text-red-600">${memberBalance.totalOwed.toLocaleString('es-AR')}</p>
-                </div>
-                <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-xs">
-                  <p className="text-xs text-gray-500 font-medium">Balance Neto</p>
-                  <p className={`text-lg font-bold ${memberBalance.balance >= 0 ? 'text-indigo-600' : 'text-red-700'}`}>
-                    ${memberBalance.balance.toLocaleString('es-AR')}
-                  </p>
+                <div className="bg-white/80 p-3 rounded-lg border border-red-100 text-red-600">
+                  <DollarSign size={24} />
                 </div>
               </div>
 
@@ -714,7 +658,6 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
         </div>
       </div>
 
-      {/* Modal para Registrar Novedad (Admin) */}
       {showNovedadModal && activeMonthForNovedad && selectedMember && currentUser.role === 'admin' && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
@@ -778,38 +721,346 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
   );
 };
 
-const ClassesView = () => {
+const ExercisesView = ({ exercises, setExercises, currentUser }) => {
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newEx, setNewEx] = useState({ name: '', muscle: '', description: '' });
+
+  const handleAdd = (e) => {
+    e.preventDefault();
+    const item = {
+      id: exercises.length > 0 ? Math.max(...exercises.map(e => e.id)) + 1 : 1,
+      ...newEx,
+      iconType: 'default'
+    };
+    setExercises([...exercises, item]);
+    setShowAddModal(false);
+    setNewEx({ name: '', muscle: '', description: '' });
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('¿Eliminar este ejercicio de la base de datos?')) {
+      setExercises(exercises.filter(e => e.id !== id));
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800">Horarios de Clases</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Base de Ejercicios de Musculación</h2>
+          <p className="text-sm text-gray-500">Ejercicios básicos disponibles para armar las rutinas de los socios.</p>
+        </div>
+        {currentUser.role === 'admin' && (
+          <button 
+            onClick={() => setShowAddModal(true)}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium"
+          >
+            <Plus size={18} /> Nuevo Ejercicio
+          </button>
+        )}
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-0">
-          <div className="divide-y divide-gray-100">
-            {CLASSES.map((cls) => (
-              <div key={cls.id} className="p-5 flex flex-col sm:flex-row gap-4 items-start sm:items-center hover:bg-gray-50 transition-colors">
-                <div className="bg-gray-100 text-gray-800 rounded-lg px-4 py-2 text-center min-w-[100px] flex items-center justify-center gap-2">
-                  <Clock size={16} className="text-gray-500" />
-                  <span className="font-bold">{cls.time}</span>
-                </div>
-                
-                <div className="flex-1">
-                  <h4 className="text-lg font-bold text-gray-800">{cls.name}</h4>
-                  <p className="text-sm text-gray-500 mt-1">Instructor: {cls.instructor} • {cls.duration}</p>
-                </div>
-                
-                <div className="flex items-center gap-4 w-full sm:w-auto">
-                  <span className="text-xs bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg font-medium">
-                    Cupos: {cls.enrolled}/{cls.capacity}
-                  </span>
-                </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {exercises.map(ex => (
+          <div key={ex.id} className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div className="flex gap-4 items-start">
+              <ExerciseVisual type={ex.iconType} />
+              <div className="flex-1">
+                <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 mb-1">{ex.muscle}</span>
+                <h3 className="font-bold text-gray-800 text-base">{ex.name}</h3>
+                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{ex.description}</p>
               </div>
-            ))}
+            </div>
+
+            {currentUser.role === 'admin' && (
+              <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end">
+                <button 
+                  onClick={() => handleDelete(ex.id)}
+                  className="text-gray-400 hover:text-red-600 text-xs flex items-center gap-1 transition-colors"
+                >
+                  <Trash2 size={14} /> Eliminar
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {showAddModal && currentUser.role === 'admin' && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-indigo-50">
+              <h3 className="text-lg font-bold text-indigo-900">Agregar Nuevo Ejercicio</h3>
+              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+            </div>
+            <form onSubmit={handleAdd} className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del Ejercicio</label>
+                <input required type="text" placeholder="Ej: Press Inclinado" value={newEx.name} onChange={e => setNewEx({...newEx, name: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Grupo Muscular</label>
+                <input required type="text" placeholder="Ej: Pecho / Hombros" value={newEx.muscle} onChange={e => setNewEx({...newEx, muscle: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción / Técnica</label>
+                <textarea required placeholder="Breve descripción de ejecución..." value={newEx.description} onChange={e => setNewEx({...newEx, description: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" rows={3}></textarea>
+              </div>
+              <div className="pt-4 flex justify-end gap-3">
+                <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 text-gray-600 text-sm font-medium">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium">Guardar Ejercicio</button>
+              </div>
+            </form>
           </div>
         </div>
+      )}
+    </div>
+  );
+};
+
+const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
+  // Selector de socio (admin) o socio actual
+  const initialDni = currentUser.role === 'admin' ? (members[0]?.dni || '') : currentUser.dni;
+  const [selectedDni, setSelectedDni] = useState(initialDni);
+
+  // Modal para agregar ejercicio a Día 1 o Día 2
+  const [showAddExModal, setShowAddExModal] = useState(false);
+  const [targetDay, setTargetDay] = useState('day1'); // 'day1' | 'day2'
+  const [selectedExId, setSelectedExId] = useState(exercises[0]?.id || 1);
+  const [seriesReps, setSeriesReps] = useState('4 x 10');
+
+  const selectedMember = members.find(m => m.dni === selectedDni) || members[0];
+  const currentMemberPlan = plans[selectedDni] || { day1: [], day2: [] };
+
+  const handleAddExerciseToPlan = (e) => {
+    e.preventDefault();
+    if (!selectedMember) return;
+
+    const dni = selectedMember.dni;
+    const memberPlan = plans[dni] ? { ...plans[dni] } : { day1: [], day2: [] };
+    
+    const newEntry = { exerciseId: Number(selectedExId), series: seriesReps };
+    if (targetDay === 'day1') {
+      memberPlan.day1 = [...memberPlan.day1, newEntry];
+    } else {
+      memberPlan.day2 = [...memberPlan.day2, newEntry];
+    }
+
+    setPlans({ ...plans, [dni]: memberPlan });
+    setShowAddExModal(false);
+    setSeriesReps('4 x 10');
+  };
+
+  const handleRemoveExercise = (day, index) => {
+    if (!selectedMember) return;
+    const dni = selectedMember.dni;
+    const memberPlan = { ...plans[dni] };
+    if (day === 'day1') {
+      memberPlan.day1 = memberPlan.day1.filter((_, i) => i !== index);
+    } else {
+      memberPlan.day2 = memberPlan.day2.filter((_, i) => i !== index);
+    }
+    setPlans({ ...plans, [dni]: memberPlan });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Planes de Entrenamiento (Día 1 y Día 2)</h2>
+          <p className="text-sm text-gray-500">Rutinas de musculación asignadas por DNI de socio.</p>
+        </div>
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {currentUser.role === 'admin' && (
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4 lg:col-span-1">
+            <h3 className="font-semibold text-gray-800 text-sm uppercase tracking-wider">Seleccionar Socio</h3>
+            <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+              {members.map(m => {
+                const isSelected = m.dni === selectedDni;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => setSelectedDni(m.dni)}
+                    className={`w-full text-left p-3 rounded-xl transition-all flex items-center justify-between border ${
+                      isSelected 
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-900 shadow-sm' 
+                        : 'bg-white border-gray-100 hover:bg-gray-50 text-gray-700'
+                    }`}
+                  >
+                    <div>
+                      <p className="font-bold text-sm">{m.firstName} {m.lastName}</p>
+                      <p className="text-xs opacity-75">DNI: {m.dni}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className={`bg-white rounded-xl border border-gray-100 shadow-sm p-6 ${currentUser.role === 'admin' ? 'lg:col-span-3' : 'lg:col-span-4'} space-y-6`}>
+          {selectedMember ? (
+            <>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 border-b border-gray-100 gap-4">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-800">Rutina de: {selectedMember.firstName} {selectedMember.lastName}</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">DNI: <span className="font-mono text-indigo-600 font-bold">{selectedMember.dni}</span></p>
+                </div>
+                {currentUser.role === 'admin' && (
+                  <button 
+                    onClick={() => setShowAddExModal(true)}
+                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-xs font-semibold flex items-center gap-2"
+                  >
+                    <Plus size={16} /> Añadir Ejercicio a Rutina
+                  </button>
+                )}
+              </div>
+
+              {/* DÍA 1 y DÍA 2 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* DIA 1 */}
+                <div className="border border-gray-200 rounded-xl p-5 bg-slate-50/50 flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
+                      <h4 className="font-extrabold text-indigo-900 text-lg flex items-center gap-2">
+                        <Dumbbell size={20} className="text-indigo-600" /> TÍTULO: DÍA 1
+                      </h4>
+                      <span className="text-xs bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded-full font-semibold">
+                        {currentMemberPlan.day1?.length || 0} ejercicios
+                      </span>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-12 text-xs font-semibold text-gray-400 uppercase tracking-wider px-2">
+                        <span className="col-span-8">Ejercicio</span>
+                        <span className="col-span-4 text-right">Series / Reps</span>
+                      </div>
+                      
+                      {currentMemberPlan.day1?.length > 0 ? (
+                        currentMemberPlan.day1.map((item, idx) => {
+                          const exInfo = exercises.find(e => e.id === item.exerciseId) || { name: 'Ejercicio eliminado', muscle: 'N/A' };
+                          return (
+                            <div key={idx} className="bg-white p-3 rounded-lg border border-gray-200 flex items-center justify-between shadow-xs">
+                              <div className="flex items-center gap-3">
+                                <ExerciseVisual />
+                                <div>
+                                  <p className="font-bold text-gray-800 text-sm">{exInfo.name}</p>
+                                  <p className="text-[11px] text-gray-500">Músculo: <span className="text-indigo-600 font-medium">{exInfo.muscle}</span></p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className="font-mono text-xs bg-slate-100 px-2.5 py-1 rounded text-slate-700 font-bold">{item.series}</span>
+                                {currentUser.role === 'admin' && (
+                                  <button onClick={() => handleRemoveExercise('day1', idx)} className="text-gray-300 hover:text-red-500">
+                                    <Trash2 size={16} />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="text-gray-400 text-xs italic text-center py-6">No hay ejercicios asignados para el Día 1.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* DIA 2 */}
+                <div className="border border-gray-200 rounded-xl p-5 bg-slate-50/50 flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
+                      <h4 className="font-extrabold text-indigo-900 text-lg flex items-center gap-2">
+                        <Dumbbell size={20} className="text-indigo-600" /> TÍTULO: DÍA 2
+                      </h4>
+                      <span className="text-xs bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded-full font-semibold">
+                        {currentMemberPlan.day2?.length || 0} ejercicios
+                      </span>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-12 text-xs font-semibold text-gray-400 uppercase tracking-wider px-2">
+                        <span className="col-span-8">Ejercicio</span>
+                        <span className="col-span-4 text-right">Series / Reps</span>
+                      </div>
+                      
+                      {currentMemberPlan.day2?.length > 0 ? (
+                        currentMemberPlan.day2.map((item, idx) => {
+                          const exInfo = exercises.find(e => e.id === item.exerciseId) || { name: 'Ejercicio eliminado', muscle: 'N/A' };
+                          return (
+                            <div key={idx} className="bg-white p-3 rounded-lg border border-gray-200 flex items-center justify-between shadow-xs">
+                              <div className="flex items-center gap-3">
+                                <ExerciseVisual />
+                                <div>
+                                  <p className="font-bold text-gray-800 text-sm">{exInfo.name}</p>
+                                  <p className="text-[11px] text-gray-500">Músculo: <span className="text-indigo-600 font-medium">{exInfo.muscle}</span></p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className="font-mono text-xs bg-slate-100 px-2.5 py-1 rounded text-slate-700 font-bold">{item.series}</span>
+                                {currentUser.role === 'admin' && (
+                                  <button onClick={() => handleRemoveExercise('day2', idx)} className="text-gray-300 hover:text-red-500">
+                                    <Trash2 size={16} />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="text-gray-400 text-xs italic text-center py-6">No hay ejercicios asignados para el Día 2.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-gray-400 text-center py-10">Selecciona un socio para ver su plan de entrenamiento.</p>
+          )}
+        </div>
+      </div>
+
+      {showAddExModal && currentUser.role === 'admin' && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-indigo-50">
+              <h3 className="text-lg font-bold text-indigo-900">Añadir Ejercicio al Plan de {selectedMember?.firstName}</h3>
+              <button onClick={() => setShowAddExModal(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+            </div>
+            <form onSubmit={handleAddExerciseToPlan} className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Día de la Rutina</label>
+                <select value={targetDay} onChange={e => setTargetDay(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-semibold">
+                  <option value="day1">Día 1</option>
+                  <option value="day2">Día 2</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Seleccionar Ejercicio de la Base</label>
+                <select value={selectedExId} onChange={e => setSelectedExId(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                  {exercises.map(ex => (
+                    <option key={ex.id} value={ex.id}>{ex.name} ({ex.muscle})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Series y Repeticiones</label>
+                <input required type="text" placeholder="Ej: 4 x 10 o 3 x 12" value={seriesReps} onChange={e => setSeriesReps(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+              </div>
+
+              <div className="pt-4 flex justify-end gap-3">
+                <button type="button" onClick={() => setShowAddExModal(false)} className="px-4 py-2 text-gray-600 text-sm font-medium">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium">Agregar a Rutina</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -886,26 +1137,24 @@ const SettingsView = ({ admins, setAdmins }) => {
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
             <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-indigo-50">
               <h3 className="text-lg font-bold text-indigo-900">Crear Nuevo Administrador</h3>
-              <button onClick={() => setShowNewAdminModal(false)} className="text-gray-400 hover:text-gray-600">
-                <X size={20} />
-              </button>
+              <button onClick={() => setShowNewAdminModal(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
             <form onSubmit={handleAddAdmin} className="p-5 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
-                <input required type="text" value={newAdmin.name} onChange={e => setNewAdmin({...newAdmin, name: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                <input required type="text" value={newAdmin.name} onChange={e => setNewAdmin({...newAdmin, name: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de Usuario (Login)</label>
-                <input required type="text" placeholder="ej: andres_admin" value={newAdmin.username} onChange={e => setNewAdmin({...newAdmin, username: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                <input required type="text" placeholder="ej: andres_admin" value={newAdmin.username} onChange={e => setNewAdmin({...newAdmin, username: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-                <input required type="password" placeholder="••••••" value={newAdmin.password} onChange={e => setNewAdmin({...newAdmin, password: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                <input required type="password" placeholder="••••••" value={newAdmin.password} onChange={e => setNewAdmin({...newAdmin, password: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
               </div>
               <div className="pt-4 flex justify-end gap-3">
-                <button type="button" onClick={() => setShowNewAdminModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">Guardar Administrador</button>
+                <button type="button" onClick={() => setShowNewAdminModal(false)} className="px-4 py-2 text-gray-600 text-sm font-medium">Cancelar</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium">Guardar Administrador</button>
               </div>
             </form>
           </div>
@@ -1055,17 +1304,21 @@ export default function App() {
     ];
   });
 
-  useEffect(() => {
-    localStorage.setItem('gym_members', JSON.stringify(members));
-  }, [members]);
+  const [exercises, setExercises] = useState(() => {
+    const saved = localStorage.getItem('gym_exercises');
+    return saved ? JSON.parse(saved) : INITIAL_EXERCISES;
+  });
 
-  useEffect(() => {
-    localStorage.setItem('gym_ledger', JSON.stringify(ledger));
-  }, [ledger]);
+  const [plans, setPlans] = useState(() => {
+    const saved = localStorage.getItem('gym_member_plans');
+    return saved ? JSON.parse(saved) : INITIAL_PLANS;
+  });
 
-  useEffect(() => {
-    localStorage.setItem('gym_admins', JSON.stringify(admins));
-  }, [admins]);
+  useEffect(() => { localStorage.setItem('gym_members', JSON.stringify(members)); }, [members]);
+  useEffect(() => { localStorage.setItem('gym_ledger', JSON.stringify(ledger)); }, [ledger]);
+  useEffect(() => { localStorage.setItem('gym_admins', JSON.stringify(admins)); }, [admins]);
+  useEffect(() => { localStorage.setItem('gym_exercises', JSON.stringify(exercises)); }, [exercises]);
+  useEffect(() => { localStorage.setItem('gym_member_plans', JSON.stringify(plans)); }, [plans]);
 
   if (!user) {
     return <LoginScreen members={members} admins={admins} onLogin={(userData) => { setUser(userData); setActiveTab('dashboard'); }} />;
@@ -1075,7 +1328,8 @@ export default function App() {
     { id: 'dashboard', label: 'Panel', icon: LayoutDashboard, roles: ['admin', 'member'] },
     { id: 'members', label: 'Gestión de Socios', icon: Users, roles: ['admin'] },
     { id: 'payments', label: 'Cuenta Corriente', icon: CreditCard, roles: ['admin', 'member'] },
-    { id: 'classes', label: 'Clases', icon: Calendar, roles: ['admin', 'member'] },
+    { id: 'exercises', label: 'Ejercicios', icon: Activity, roles: ['admin', 'member'] },
+    { id: 'plans', label: 'Planes', icon: Dumbbell, roles: ['admin', 'member'] },
     { id: 'settings', label: 'Ajustes Admin', icon: Settings, roles: ['admin'] },
   ];
 
@@ -1097,7 +1351,8 @@ export default function App() {
       case 'dashboard': return <DashboardView members={members} ledger={ledger} />;
       case 'members': return <MembersView members={members} setMembers={setMembers} />;
       case 'payments': return <CurrentAccountView members={members} ledger={ledger} setLedger={setLedger} currentUser={user} />;
-      case 'classes': return <ClassesView />;
+      case 'exercises': return <ExercisesView exercises={exercises} setExercises={setExercises} currentUser={user} />;
+      case 'plans': return <PlansView members={members} exercises={exercises} plans={plans} setPlans={setPlans} currentUser={user} />;
       case 'settings': return <SettingsView admins={admins} setAdmins={setAdmins} />;
       default: return (
         <div className="flex flex-col items-center justify-center h-64 text-gray-400">
