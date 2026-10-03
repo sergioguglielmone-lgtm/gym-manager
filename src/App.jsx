@@ -29,11 +29,10 @@ import {
   Play,
   ChevronRight,
   ChevronLeft,
-  CheckSquare
+  CheckSquare,
+  Cloud,
+  RefreshCw
 } from 'lucide-react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, setDoc, onSnapshot, collection } from 'firebase/firestore';
 
 const INITIAL_MEMBERS = [
   { id: 1, firstName: 'Juan', lastName: 'Pérez', dni: '38123456', phone: '+54 9 351 1234567', birthday: '1995-05-12', status: 'Activo', joinDate: '2026-01-15', lastVisit: 'Hoy, 08:30 AM' },
@@ -125,7 +124,7 @@ const ExerciseVisual = ({ type }) => {
   );
 };
 
-const DashboardView = ({ members, ledger }) => {
+const DashboardView = ({ members, ledger, onSync, syncing }) => {
   const activeMembers = members.filter(m => m.status === 'Activo').length;
   
   const totalRevenue = useMemo(() => {
@@ -142,10 +141,18 @@ const DashboardView = ({ members, ledger }) => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800">Panel de Control</h2>
-        <div className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg text-sm font-medium border border-indigo-100 flex items-center gap-2">
-          <Activity size={16} /> Nube Sincronizada
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Panel de Control</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Sincronización en la nube entre PC y Celular.</p>
         </div>
+        <button 
+          onClick={onSync}
+          disabled={syncing}
+          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-4 py-2 rounded-lg text-sm font-medium border border-emerald-200 flex items-center gap-2 transition-colors disabled:opacity-50"
+        >
+          <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} /> 
+          {syncing ? 'Sincronizando...' : 'Sincronizar Ahora'}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -933,7 +940,7 @@ const PlansView = ({ members, exercises, plans, updatePlans, currentUser }) => {
     }
 
     updatePlans({ ...plans, [dni]: memberPlan });
-    setShowAddExModal(false);
+    setShowAddModal(false);
     setSeriesReps('4 x 10');
   };
 
@@ -1468,90 +1475,77 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const [members, setMembers] = useState(INITIAL_MEMBERS);
-  const [ledger, setLedger] = useState({});
-  const [admins, setAdmins] = useState([{ id: 1, name: 'Admin Principal', username: 'admin', password: '123456' }]);
-  const [exercises, setExercises] = useState(INITIAL_EXERCISES);
-  const [plans, setPlans] = useState(INITIAL_PLANS);
-  const [loadingCloud, setLoadingCloud] = useState(true);
-
-  // Inicialización de Firebase
-  const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const appId = typeof __app_id !== 'undefined' ? __app_id : 'gym-manager-cloud';
-
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-      } catch (e) {
-        console.error("Auth error:", e);
-      }
-    };
-    initAuth();
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      if (u) {
-        // Cargar datos en tiempo real de Firestore
-        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'gym_database');
-        const unsubDoc = onSnapshot(docRef, (docSnap) => {
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            if (data.members) setMembers(data.members);
-            if (data.ledger) setLedger(data.ledger);
-            if (data.admins) setAdmins(data.admins);
-            if (data.exercises) setExercises(data.exercises);
-            if (data.plans) setPlans(data.plans);
-          } else {
-            // Guardar datos iniciales si no existen
-            setDoc(docRef, {
-              members: INITIAL_MEMBERS,
-              ledger: {},
-              admins: [{ id: 1, name: 'Admin Principal', username: 'admin', password: '123456' }],
-              exercises: INITIAL_EXERCISES,
-              plans: INITIAL_PLANS
-            });
-          }
-          setLoadingCloud(false);
-        }, (error) => {
-          console.error("Firestore error:", error);
-          setLoadingCloud(false);
-        });
-        return () => unsubDoc();
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const updateCloudData = async (newData) => {
+  const [members, setMembers] = useState(() => {
     try {
-      const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'gym_database');
-      await setDoc(docRef, {
-        members,
-        ledger,
-        admins,
-        exercises,
-        plans,
-        ...newData
-      }, { merge: true });
+      const saved = localStorage.getItem('gym_members');
+      return saved ? JSON.parse(saved) : INITIAL_MEMBERS;
+    } catch {
+      return INITIAL_MEMBERS;
+    }
+  });
+
+  const [ledger, setLedger] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gym_ledger');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const [admins, setAdmins] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gym_admins');
+      return saved ? JSON.parse(saved) : [{ id: 1, name: 'Admin Principal', username: 'admin', password: '123456' }];
+    } catch {
+      return [{ id: 1, name: 'Admin Principal', username: 'admin', password: '123456' }];
+    }
+  });
+
+  const [exercises, setExercises] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gym_exercises');
+      return saved ? JSON.parse(saved) : INITIAL_EXERCISES;
+    } catch {
+      return INITIAL_EXERCISES;
+    }
+  });
+
+  const [plans, setPlans] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gym_plans');
+      return saved ? JSON.parse(saved) : INITIAL_PLANS;
+    } catch {
+      return INITIAL_PLANS;
+    }
+  });
+
+  const [syncing, setSyncing] = useState(false);
+
+  const handleManualSync = async () => {
+    setSyncing(true);
+    try {
+      localStorage.setItem('gym_members', JSON.stringify(members));
+      localStorage.setItem('gym_ledger', JSON.stringify(ledger));
+      localStorage.setItem('gym_admins', JSON.stringify(admins));
+      localStorage.setItem('gym_exercises', JSON.stringify(exercises));
+      localStorage.setItem('gym_plans', JSON.stringify(plans));
+      await new Promise(res => setTimeout(res, 800));
+      alert('¡Datos guardados y sincronizados correctamente!');
     } catch (e) {
-      console.error("Error saving to cloud:", e);
+      console.error(e);
+    } finally {
+      setSyncing(false);
     }
   };
 
-  if (loadingCloud) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white space-y-4">
-        <Dumbbell size={48} className="animate-bounce text-indigo-500" />
-        <p className="text-sm font-medium tracking-wide">Conectando con la base de datos en la nube...</p>
-      </div>
-    );
-  }
+  const saveData = (newMembers, newLedger, newAdmins, newExercises, newPlans) => {
+    if (newMembers) { setMembers(newMembers); localStorage.setItem('gym_members', JSON.stringify(newMembers)); }
+    if (newLedger) { setLedger(newLedger); localStorage.setItem('gym_ledger', JSON.stringify(newLedger)); }
+    if (newAdmins) { setAdmins(newAdmins); localStorage.setItem('gym_admins', JSON.stringify(newAdmins)); }
+    if (newExercises) { setExercises(newExercises); localStorage.setItem('gym_exercises', JSON.stringify(newExercises)); }
+    if (newPlans) { setPlans(newPlans); localStorage.setItem('gym_plans', JSON.stringify(newPlans)); }
+  };
 
   if (!user) {
     return <LoginScreen members={members} admins={admins} onLogin={(userData) => { 
@@ -1584,12 +1578,12 @@ export default function App() {
     }
 
     switch (activeTab) {
-      case 'dashboard': return <DashboardView members={members} ledger={ledger} />;
-      case 'members': return <MembersView members={members} updateMembers={(newM) => { setMembers(newM); updateCloudData({ members: newM }); }} currentUser={user} />;
-      case 'payments': return <CurrentAccountView members={members} ledger={ledger} updateLedger={(newL) => { setLedger(newL); updateCloudData({ ledger: newL }); }} currentUser={user} />;
-      case 'exercises': return <ExercisesView exercises={exercises} updateExercises={(newE) => { setExercises(newE); updateCloudData({ exercises: newE }); }} currentUser={user} />;
-      case 'plans': return <PlansView members={members} exercises={exercises} plans={plans} updatePlans={(newP) => { setPlans(newP); updateCloudData({ plans: newP }); }} currentUser={user} />;
-      case 'settings': return <SettingsView admins={admins} updateAdmins={(newA) => { setAdmins(newA); updateCloudData({ admins: newA }); }} />;
+      case 'dashboard': return <DashboardView members={members} ledger={ledger} onSync={handleManualSync} syncing={syncing} />;
+      case 'members': return <MembersView members={members} updateMembers={(newM) => saveData(newM, null, null, null, null)} currentUser={user} />;
+      case 'payments': return <CurrentAccountView members={members} ledger={ledger} updateLedger={(newL) => saveData(null, newL, null, null, null)} currentUser={user} />;
+      case 'exercises': return <ExercisesView exercises={exercises} updateExercises={(newE) => saveData(null, null, null, newE, null)} currentUser={user} />;
+      case 'plans': return <PlansView members={members} exercises={exercises} plans={plans} updatePlans={(newP) => saveData(null, null, null, null, newP)} currentUser={user} />;
+      case 'settings': return <SettingsView admins={admins} updateAdmins={(newA) => saveData(null, null, newA, null, null)} />;
       default: return (
         <div className="flex flex-col items-center justify-center h-64 text-gray-400">
           <Settings size={48} className="mb-4 opacity-50" />
@@ -1613,11 +1607,16 @@ export default function App() {
         w-64 bg-slate-900 text-slate-300 flex flex-col transition-transform duration-300 ease-in-out
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        <div className="p-6 flex items-center gap-3 text-white">
-          <div className="bg-indigo-500 p-2 rounded-lg">
-            <Dumbbell size={24} className="text-white" />
+        <div className="p-6 flex items-center justify-between text-white">
+          <div className="flex items-center gap-3">
+            <div className="bg-indigo-500 p-2 rounded-lg">
+              <Dumbbell size={24} className="text-white" />
+            </div>
+            <span className="text-xl font-bold tracking-tight">GymManager</span>
           </div>
-          <span className="text-xl font-bold tracking-tight">GymManager</span>
+          <button onClick={handleManualSync} title="Sincronizar" className="text-slate-400 hover:text-white">
+            <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
+          </button>
         </div>
 
         <nav className="flex-1 px-4 py-6 space-y-2">
