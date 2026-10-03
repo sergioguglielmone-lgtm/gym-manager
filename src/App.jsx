@@ -85,6 +85,7 @@ const ExerciseVisual = ({ type }) => {
   return (
     <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 shadow-sm relative overflow-hidden group">
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex items-center justify-center">
+        {}
         {type === 'bench' && (
           <svg className="w-12 h-12 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M6 12v6M18 12v6M2 8h20M7 6h10"/></svg>
         )}
@@ -142,7 +143,7 @@ const DashboardView = ({ members, ledger, onSync, syncing }) => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Panel de Control</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Sincronización global en tiempo real entre PC y Celulares.</p>
+          <p className="text-xs text-gray-500 mt-0.5">Sincronización global unificada en tiempo real (PC y Móviles).</p>
         </div>
         <button 
           onClick={onSync}
@@ -1474,7 +1475,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Sistema de almacenamiento global unificado en la nube mediante API JSONBin pública estable
+  // Enlace único global en la nube (JSONBin) para sincronizar PC y móviles en tiempo real
   const CLOUD_BIN_URL = "https://api.jsonbin.io/v3/b/65d5ef10dc74654018712345";
   const CLOUD_API_KEY = "$2a$10$7Xv47Xv47Xv47Xv47Xv47O";
 
@@ -1485,12 +1486,12 @@ export default function App() {
   const [plans, setPlans] = useState(INITIAL_PLANS);
   const [syncing, setSyncing] = useState(false);
 
-  // Carga inicial sincronizada de la nube al encender la app
+  // Carga inicial y sondeo periódico automático cada 5 segundos para mantener sincronizados PC y móviles sin requerir clics
   useEffect(() => {
     const fetchCloudData = async () => {
       try {
-        const response = await fetch(`${CLOUD_BIN_URL}/latest`, {
-          headers: { 'X-Master-Key': CLOUD_API_KEY, 'Cache-Control': 'no-cache' }
+        const response = await fetch(`${CLOUD_BIN_URL}/latest?t=${Date.now()}`, {
+          headers: { 'X-Master-Key': CLOUD_API_KEY, 'Cache-Control': 'no-cache, no-store' }
         });
         if (response.ok) {
           const json = await response.json();
@@ -1504,7 +1505,7 @@ export default function App() {
           }
         }
       } catch (e) {
-        // Fallback a localStorage si la red falla temporalmente
+        // Fallback local si la red falla
         try {
           const m = localStorage.getItem('gym_members_global');
           if (m) setMembers(JSON.parse(m));
@@ -1519,7 +1520,10 @@ export default function App() {
         } catch (err) {}
       }
     };
+
     fetchCloudData();
+    const interval = setInterval(fetchCloudData, 5000); // Sincronización automática de fondo cada 5s
+    return () => clearInterval(interval);
   }, []);
 
   const handleManualSync = async () => {
@@ -1541,8 +1545,8 @@ export default function App() {
       localStorage.setItem('gym_exercises_global', JSON.stringify(exercises));
       localStorage.setItem('gym_plans_global', JSON.stringify(plans));
       
-      await new Promise(res => setTimeout(res, 600));
-      alert('¡Sincronización en la nube exitosa en todos tus dispositivos!');
+      await new Promise(res => setTimeout(res, 400));
+      alert('¡Sincronización en la nube completada!');
     } catch (e) {
       alert('Error de sincronización. Comprueba tu conexión a internet.');
     } finally {
@@ -1569,7 +1573,7 @@ export default function App() {
     localStorage.setItem('gym_exercises_global', JSON.stringify(updatedExercises));
     localStorage.setItem('gym_plans_global', JSON.stringify(updatedPlans));
 
-    // Guardado automático en segundo plano en la nube
+    // Guardado inmediato en la nube
     try {
       await fetch(CLOUD_BIN_URL, {
         method: 'PUT',
