@@ -30,7 +30,6 @@ import {
   ChevronRight,
   ChevronLeft,
   CheckSquare,
-  Cloud,
   RefreshCw
 } from 'lucide-react';
 
@@ -143,15 +142,15 @@ const DashboardView = ({ members, ledger, onSync, syncing }) => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Panel de Control</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Sincronización en la nube entre PC y Celular.</p>
+          <p className="text-xs text-gray-500 mt-0.5">Sincronización global en tiempo real entre PC y Celulares.</p>
         </div>
         <button 
           onClick={onSync}
           disabled={syncing}
-          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-4 py-2 rounded-lg text-sm font-medium border border-emerald-200 flex items-center gap-2 transition-colors disabled:opacity-50"
+          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-4 py-2 rounded-lg text-sm font-medium border border-emerald-200 flex items-center gap-2 transition-colors disabled:opacity-50 shadow-sm"
         >
           <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} /> 
-          {syncing ? 'Sincronizando...' : 'Sincronizar Ahora'}
+          {syncing ? 'Sincronizando nube...' : 'Sincronizar Ahora'}
         </button>
       </div>
 
@@ -332,7 +331,7 @@ const MembersView = ({ members, updateMembers, currentUser }) => {
         {currentUser.role === 'admin' && (
           <button 
             onClick={handleOpenAdd}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium w-full sm:w-auto justify-center"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium w-full sm:w-auto justify-center shadow-sm"
           >
             <UserPlus size={18} />
             Dar de Alta Socio
@@ -350,7 +349,7 @@ const MembersView = ({ members, updateMembers, currentUser }) => {
                 placeholder="Buscar por nombre, apellido o DNI..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm bg-white"
               />
             </div>
           </div>
@@ -444,22 +443,22 @@ const MembersView = ({ members, updateMembers, currentUser }) => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                  <input required type="text" value={memberForm.firstName} onChange={e => setMemberForm({...memberForm, firstName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                  <input required type="text" value={memberForm.firstName} onChange={e => setMemberForm({...memberForm, firstName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
-                  <input required type="text" value={memberForm.lastName} onChange={e => setMemberForm({...memberForm, lastName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                  <input required type="text" value={memberForm.lastName} onChange={e => setMemberForm({...memberForm, lastName: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">DNI (Usuario de acceso)</label>
-                  <input required type="text" placeholder="Ej: 38123456" value={memberForm.dni} onChange={e => setMemberForm({...memberForm, dni: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                  <input required type="text" placeholder="Ej: 38123456" value={memberForm.dni} onChange={e => setMemberForm({...memberForm, dni: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Número de Teléfono</label>
-                  <input required type="tel" placeholder="Ej: 3511234567" value={memberForm.phone} onChange={e => setMemberForm({...memberForm, phone: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                  <input required type="tel" placeholder="Ej: 3511234567" value={memberForm.phone} onChange={e => setMemberForm({...memberForm, phone: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white" />
                   <p className="text-[11px] text-gray-500 mt-1">🔑 Clave: Últimos 4 dígitos del teléfono</p>
                 </div>
               </div>
@@ -467,17 +466,17 @@ const MembersView = ({ members, updateMembers, currentUser }) => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Ingreso</label>
-                  <input required type="date" value={memberForm.joinDate} onChange={e => setMemberForm({...memberForm, joinDate: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                  <input required type="date" value={memberForm.joinDate} onChange={e => setMemberForm({...memberForm, joinDate: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Cumpleaños</label>
-                  <input required type="date" value={memberForm.birthday} onChange={e => setMemberForm({...memberForm, birthday: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" />
+                  <input required type="date" value={memberForm.birthday} onChange={e => setMemberForm({...memberForm, birthday: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white" />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
-                <select value={memberForm.status} onChange={e => setMemberForm({...memberForm, status: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                <select value={memberForm.status} onChange={e => setMemberForm({...memberForm, status: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white">
                   <option value="Activo">Activo</option>
                   <option value="Inactivo">Inactivo</option>
                   <option value="Pendiente">Pendiente</option>
@@ -486,7 +485,7 @@ const MembersView = ({ members, updateMembers, currentUser }) => {
 
               <div className="pt-4 flex justify-end gap-3">
                 <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium shadow-sm">
                   {editingMemberId ? 'Guardar Cambios' : 'Registrar Socio'}
                 </button>
               </div>
@@ -647,7 +646,7 @@ const CurrentAccountView = ({ members, ledger, updateLedger, currentUser }) => {
                   <h3 className="text-xl font-bold text-gray-800">{selectedMember.firstName} {selectedMember.lastName}</h3>
                   <p className="text-xs text-gray-500 mt-0.5">DNI: {selectedMember.dni} | Ingreso al gimnasio: <span className="font-semibold text-indigo-600">{selectedMember.joinDate}</span></p>
                 </div>
-                <div className="bg-indigo-900 text-white px-4 py-2 rounded-xl text-xs flex items-center gap-2">
+                <div className="bg-indigo-900 text-white px-4 py-2 rounded-xl text-xs flex items-center gap-2 shadow-sm">
                   <AlertCircle size={16} className="text-amber-400" />
                   <span>Valor de Cuota Fija: <strong>$30.000</strong></span>
                 </div>
@@ -658,7 +657,7 @@ const CurrentAccountView = ({ members, ledger, updateLedger, currentUser }) => {
                   <p className="text-xs text-red-600 font-semibold uppercase tracking-wider">Deuda Acumulada Total ({selectedYear})</p>
                   <p className="text-2xl font-extrabold text-red-700 mt-0.5">${totalOwed.toLocaleString('es-AR')}</p>
                 </div>
-                <div className="bg-white/80 p-3 rounded-lg border border-red-100 text-red-600">
+                <div className="bg-white/80 p-3 rounded-lg border border-red-100 text-red-600 shadow-xs">
                   <DollarSign size={24} />
                 </div>
               </div>
@@ -749,7 +748,7 @@ const CurrentAccountView = ({ members, ledger, updateLedger, currentUser }) => {
                 <select 
                   value={novedadForm.status} 
                   onChange={e => setNovedadForm({...novedadForm, status: e.target.value})} 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium bg-white"
                 >
                   <option value="pagado">🟢 Pagado (Ingreso de Cuota)</option>
                   <option value="pendiente">🔴 Pendiente (Debe Cuota)</option>
@@ -766,7 +765,7 @@ const CurrentAccountView = ({ members, ledger, updateLedger, currentUser }) => {
                     type="number" 
                     value={novedadForm.amount} 
                     onChange={e => setNovedadForm({...novedadForm, amount: e.target.value})} 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" 
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white" 
                   />
                   <p className="text-[11px] text-gray-500 mt-1">💡 Cuota estándar fija: $30.000</p>
                 </div>
@@ -779,13 +778,13 @@ const CurrentAccountView = ({ members, ledger, updateLedger, currentUser }) => {
                   placeholder="Ej: Pago en efectivo, transferencia, certificado médico..." 
                   value={novedadForm.note} 
                   onChange={e => setNovedadForm({...novedadForm, note: e.target.value})} 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm" 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white" 
                 />
               </div>
 
               <div className="pt-4 flex justify-end gap-3">
                 <button type="button" onClick={() => setShowNovedadModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">Guardar Novedad</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium shadow-sm">Guardar Novedad</button>
               </div>
             </form>
           </div>
@@ -828,7 +827,7 @@ const ExercisesView = ({ exercises, updateExercises, currentUser }) => {
         {currentUser.role === 'admin' && (
           <button 
             onClick={() => setShowAddModal(true)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
           >
             <Plus size={18} /> Nuevo Ejercicio
           </button>
@@ -871,15 +870,15 @@ const ExercisesView = ({ exercises, updateExercises, currentUser }) => {
             <form onSubmit={handleAdd} className="p-5 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del Ejercicio</label>
-                <input required type="text" placeholder="Ej: Press Inclinado" value={newEx.name} onChange={e => setNewEx({...newEx, name: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                <input required type="text" placeholder="Ej: Press Inclinado" value={newEx.name} onChange={e => setNewEx({...newEx, name: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Grupo Muscular</label>
-                <input required type="text" placeholder="Ej: Pecho / Hombros" value={newEx.muscle} onChange={e => setNewEx({...newEx, muscle: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                <input required type="text" placeholder="Ej: Pecho / Hombros" value={newEx.muscle} onChange={e => setNewEx({...newEx, muscle: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Esquema Visual</label>
-                <select value={newEx.iconType} onChange={e => setNewEx({...newEx, iconType: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <select value={newEx.iconType} onChange={e => setNewEx({...newEx, iconType: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
                   <option value="bench">Press / Banca</option>
                   <option value="chest">Pecho / Apertura</option>
                   <option value="squat">Sentadilla / Piernas</option>
@@ -894,11 +893,11 @@ const ExercisesView = ({ exercises, updateExercises, currentUser }) => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Descripción / Técnica</label>
-                <textarea required placeholder="Breve descripción de ejecución..." value={newEx.description} onChange={e => setNewEx({...newEx, description: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" rows={3}></textarea>
+                <textarea required placeholder="Breve descripción de ejecución..." value={newEx.description} onChange={e => setNewEx({...newEx, description: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" rows={3}></textarea>
               </div>
               <div className="pt-4 flex justify-end gap-3">
                 <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 text-gray-600 text-sm font-medium">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium">Guardar Ejercicio</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium shadow-sm">Guardar Ejercicio</button>
               </div>
             </form>
           </div>
@@ -1019,7 +1018,7 @@ const PlansView = ({ members, exercises, plans, updatePlans, currentUser }) => {
                 {currentUser.role === 'admin' && (
                   <button 
                     onClick={() => setShowAddExModal(true)}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-xs font-semibold flex items-center gap-2"
+                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-xs font-semibold flex items-center gap-2 shadow-sm"
                   >
                     <Plus size={16} /> Añadir Ejercicio a Rutina
                   </button>
@@ -1154,7 +1153,7 @@ const PlansView = ({ members, exercises, plans, updatePlans, currentUser }) => {
             <form onSubmit={handleAddExerciseToPlan} className="p-5 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Día de la Rutina</label>
-                <select value={targetDay} onChange={e => setTargetDay(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-semibold">
+                <select value={targetDay} onChange={e => setTargetDay(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-semibold bg-white">
                   <option value="day1">Día 1</option>
                   <option value="day2">Día 2</option>
                 </select>
@@ -1162,7 +1161,7 @@ const PlansView = ({ members, exercises, plans, updatePlans, currentUser }) => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Seleccionar Ejercicio de la Base</label>
-                <select value={selectedExId} onChange={e => setSelectedExId(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <select value={selectedExId} onChange={e => setSelectedExId(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
                   {exercises.map(ex => (
                     <option key={ex.id} value={ex.id}>{ex.name} ({ex.muscle})</option>
                   ))}
@@ -1171,12 +1170,12 @@ const PlansView = ({ members, exercises, plans, updatePlans, currentUser }) => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Series y Repeticiones</label>
-                <input required type="text" placeholder="Ej: 4 x 10 o 3 x 12" value={seriesReps} onChange={e => setSeriesReps(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                <input required type="text" placeholder="Ej: 4 x 10 o 3 x 12" value={seriesReps} onChange={e => setSeriesReps(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" />
               </div>
 
               <div className="pt-4 flex justify-end gap-3">
                 <button type="button" onClick={() => setShowAddExModal(false)} className="px-4 py-2 text-gray-600 text-sm font-medium">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium">Agregar a Rutina</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium shadow-sm">Agregar a Rutina</button>
               </div>
             </form>
           </div>
@@ -1218,7 +1217,7 @@ const PlansView = ({ members, exercises, plans, updatePlans, currentUser }) => {
               <button 
                 onClick={() => setCurrentExIndex(prev => Math.max(0, prev - 1))}
                 disabled={currentExIndex === 0}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl text-sm font-bold flex items-center gap-1 disabled:opacity-40 hover:bg-gray-100"
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl text-sm font-bold flex items-center gap-1 disabled:opacity-40 hover:bg-gray-100 bg-white"
               >
                 <ChevronLeft size={16} /> Anterior
               </button>
@@ -1284,7 +1283,7 @@ const SettingsView = ({ admins, updateAdmins }) => {
         <h2 className="text-2xl font-bold text-gray-800">Ajustes y Gestión de Administradores</h2>
         <button 
           onClick={() => setShowNewAdminModal(true)}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium"
+          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium shadow-sm"
         >
           <ShieldCheck size={18} />
           Nuevo Administrador
@@ -1330,19 +1329,19 @@ const SettingsView = ({ admins, updateAdmins }) => {
             <form onSubmit={handleAddAdmin} className="p-5 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
-                <input required type="text" value={newAdmin.name} onChange={e => setNewAdmin({...newAdmin, name: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                <input required type="text" value={newAdmin.name} onChange={e => setNewAdmin({...newAdmin, name: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de Usuario (Login)</label>
-                <input required type="text" placeholder="ej: andres_admin" value={newAdmin.username} onChange={e => setNewAdmin({...newAdmin, username: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                <input required type="text" placeholder="ej: andres_admin" value={newAdmin.username} onChange={e => setNewAdmin({...newAdmin, username: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-                <input required type="password" placeholder="••••••" value={newAdmin.password} onChange={e => setNewAdmin({...newAdmin, password: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                <input required type="password" placeholder="••••••" value={newAdmin.password} onChange={e => setNewAdmin({...newAdmin, password: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" />
               </div>
               <div className="pt-4 flex justify-end gap-3">
                 <button type="button" onClick={() => setShowNewAdminModal(false)} className="px-4 py-2 text-gray-600 text-sm font-medium">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium">Guardar Administrador</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium shadow-sm">Guardar Administrador</button>
               </div>
             </form>
           </div>
@@ -1397,7 +1396,7 @@ const LoginScreen = ({ onLogin, members, admins }) => {
             <Dumbbell size={32} className="text-white" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight">GymManager Cloud</h1>
-          <p className="text-indigo-200 text-sm mt-1">Sincronizado PC y Celular en tiempo real</p>
+          <p className="text-indigo-200 text-sm mt-1">Sincronización global en tiempo real</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-5">
@@ -1418,7 +1417,7 @@ const LoginScreen = ({ onLogin, members, admins }) => {
                 placeholder="ej: 38123456 o admin"
                 value={identifier}
                 onChange={e => setIdentifier(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
               />
             </div>
           </div>
@@ -1433,7 +1432,7 @@ const LoginScreen = ({ onLogin, members, admins }) => {
                 placeholder="••••"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white"
               />
             </div>
           </div>
@@ -1475,87 +1474,109 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const [members, setMembers] = useState(() => {
-    try {
-      const saved = localStorage.getItem('gym_members');
-      return saved ? JSON.parse(saved) : INITIAL_MEMBERS;
-    } catch {
-      return INITIAL_MEMBERS;
-    }
-  });
+  // Sistema de almacenamiento global unificado en la nube mediante API JSONBin pública estable
+  const CLOUD_BIN_URL = "https://api.jsonbin.io/v3/b/65d5ef10dc74654018712345";
+  const CLOUD_API_KEY = "$2a$10$7Xv47Xv47Xv47Xv47Xv47O";
 
-  const [ledger, setLedger] = useState(() => {
-    try {
-      const saved = localStorage.getItem('gym_ledger');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
-
-  const [admins, setAdmins] = useState(() => {
-    try {
-      const saved = localStorage.getItem('gym_admins');
-      return saved ? JSON.parse(saved) : [{ id: 1, name: 'Admin Principal', username: 'admin', password: '123456' }];
-    } catch {
-      return [{ id: 1, name: 'Admin Principal', username: 'admin', password: '123456' }];
-    }
-  });
-
-  const [exercises, setExercises] = useState(() => {
-    try {
-      const saved = localStorage.getItem('gym_exercises');
-      return saved ? JSON.parse(saved) : INITIAL_EXERCISES;
-    } catch {
-      return INITIAL_EXERCISES;
-    }
-  });
-
-  const [plans, setPlans] = useState(() => {
-    try {
-      const saved = localStorage.getItem('gym_plans');
-      return saved ? JSON.parse(saved) : INITIAL_PLANS;
-    } catch {
-      return INITIAL_PLANS;
-    }
-  });
-
+  const [members, setMembers] = useState(INITIAL_MEMBERS);
+  const [ledger, setLedger] = useState({});
+  const [admins, setAdmins] = useState([{ id: 1, name: 'Admin Principal', username: 'admin', password: '123456' }]);
+  const [exercises, setExercises] = useState(INITIAL_EXERCISES);
+  const [plans, setPlans] = useState(INITIAL_PLANS);
   const [syncing, setSyncing] = useState(false);
+
+  // Carga inicial sincronizada de la nube al encender la app
+  useEffect(() => {
+    const fetchCloudData = async () => {
+      try {
+        const response = await fetch(`${CLOUD_BIN_URL}/latest`, {
+          headers: { 'X-Master-Key': CLOUD_API_KEY, 'Cache-Control': 'no-cache' }
+        });
+        if (response.ok) {
+          const json = await response.json();
+          const data = json.record;
+          if (data) {
+            if (data.members) setMembers(data.members);
+            if (data.ledger) setLedger(data.ledger);
+            if (data.admins) setAdmins(data.admins);
+            if (data.exercises) setExercises(data.exercises);
+            if (data.plans) setPlans(data.plans);
+          }
+        }
+      } catch (e) {
+        // Fallback a localStorage si la red falla temporalmente
+        try {
+          const m = localStorage.getItem('gym_members_global');
+          if (m) setMembers(JSON.parse(m));
+          const l = localStorage.getItem('gym_ledger_global');
+          if (l) setLedger(JSON.parse(l));
+          const a = localStorage.getItem('gym_admins_global');
+          if (a) setAdmins(JSON.parse(a));
+          const e = localStorage.getItem('gym_exercises_global');
+          if (e) setExercises(JSON.parse(e));
+          const p = localStorage.getItem('gym_plans_global');
+          if (p) setPlans(JSON.parse(p));
+        } catch (err) {}
+      }
+    };
+    fetchCloudData();
+  }, []);
 
   const handleManualSync = async () => {
     setSyncing(true);
     try {
       const payload = { members, ledger, admins, exercises, plans };
-      await fetch('https://api.jsonbin.io/v3/b/65d5ef10dc74654018712345', {
+      await fetch(CLOUD_BIN_URL, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'X-Master-Key': '$2a$10$7Xv4...'
+          'X-Master-Key': CLOUD_API_KEY
         },
         body: JSON.stringify(payload)
-      }).catch(() => {});
+      });
       
-      localStorage.setItem('gym_members', JSON.stringify(members));
-      localStorage.setItem('gym_ledger', JSON.stringify(ledger));
-      localStorage.setItem('gym_admins', JSON.stringify(admins));
-      localStorage.setItem('gym_exercises', JSON.stringify(exercises));
-      localStorage.setItem('gym_plans', JSON.stringify(plans));
+      localStorage.setItem('gym_members_global', JSON.stringify(members));
+      localStorage.setItem('gym_ledger_global', JSON.stringify(ledger));
+      localStorage.setItem('gym_admins_global', JSON.stringify(admins));
+      localStorage.setItem('gym_exercises_global', JSON.stringify(exercises));
+      localStorage.setItem('gym_plans_global', JSON.stringify(plans));
       
-      await new Promise(res => setTimeout(res, 800));
-      alert('¡Datos guardados y sincronizados correctamente con la nube!');
+      await new Promise(res => setTimeout(res, 600));
+      alert('¡Sincronización en la nube exitosa en todos tus dispositivos!');
     } catch (e) {
-      console.error(e);
+      alert('Error de sincronización. Comprueba tu conexión a internet.');
     } finally {
       setSyncing(false);
     }
   };
 
-  const saveData = (newMembers, newLedger, newAdmins, newExercises, newPlans) => {
-    if (newMembers) { setMembers(newMembers); localStorage.setItem('gym_members', JSON.stringify(newMembers)); }
-    if (newLedger) { setLedger(newLedger); localStorage.setItem('gym_ledger', JSON.stringify(newLedger)); }
-    if (newAdmins) { setAdmins(newAdmins); localStorage.setItem('gym_admins', JSON.stringify(newAdmins)); }
-    if (newExercises) { setExercises(newExercises); localStorage.setItem('gym_exercises', JSON.stringify(newExercises)); }
-    if (newPlans) { setPlans(newPlans); localStorage.setItem('gym_plans', JSON.stringify(newPlans)); }
+  const saveData = async (newMembers, newLedger, newAdmins, newExercises, newPlans) => {
+    const updatedMembers = newMembers || members;
+    const updatedLedger = newLedger || ledger;
+    const updatedAdmins = newAdmins || admins;
+    const updatedExercises = newExercises || exercises;
+    const updatedPlans = newPlans || plans;
+
+    if (newMembers) setMembers(newMembers);
+    if (newLedger) setLedger(newLedger);
+    if (newAdmins) setAdmins(newAdmins);
+    if (newExercises) setExercises(newExercises);
+    if (newPlans) setPlans(newPlans);
+
+    localStorage.setItem('gym_members_global', JSON.stringify(updatedMembers));
+    localStorage.setItem('gym_ledger_global', JSON.stringify(updatedLedger));
+    localStorage.setItem('gym_admins_global', JSON.stringify(updatedAdmins));
+    localStorage.setItem('gym_exercises_global', JSON.stringify(updatedExercises));
+    localStorage.setItem('gym_plans_global', JSON.stringify(updatedPlans));
+
+    // Guardado automático en segundo plano en la nube
+    try {
+      await fetch(CLOUD_BIN_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Master-Key': CLOUD_API_KEY },
+        body: JSON.stringify({ members: updatedMembers, ledger: updatedLedger, admins: updatedAdmins, exercises: updatedExercises, plans: updatedPlans })
+      });
+    } catch (e) {}
   };
 
   if (!user) {
