@@ -301,7 +301,6 @@ const MembersView = ({ members, setMembers, currentUser }) => {
     }
   };
 
-  // Si es socio regular, solo ve su propia ficha
   const displayMembers = currentUser.role === 'admin' 
     ? filteredMembers 
     : members.filter(m => m.dni === currentUser.dni);
@@ -489,7 +488,6 @@ const MembersView = ({ members, setMembers, currentUser }) => {
 const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   
-  // Si es socio, fuerza su propio ID. Si es admin, permite seleccionar.
   const initialMemberId = currentUser.role === 'admin' 
     ? (members[0]?.id || '') 
     : (members.find(m => m.dni === currentUser.dni)?.id || members[0]?.id || '');
@@ -504,7 +502,6 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
     note: ''
   });
 
-  // Si es miembro, aseguramos que siempre examine su propio registro
   const effectiveMemberId = currentUser.role === 'admin' 
     ? selectedMemberId 
     : (members.find(m => m.dni === currentUser.dni)?.id || selectedMemberId);
@@ -998,9 +995,8 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
                 )}
               </div>
 
-              {/* DÍA 1 y DÍA 2 */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* DIA 1 */}
+                {/* DÍA 1 */}
                 <div className="border border-gray-200 rounded-xl p-5 bg-slate-50/50 flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
@@ -1048,7 +1044,7 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
                   </div>
                 </div>
 
-                {/* DIA 2 */}
+                {/* DÍA 2 */}
                 <div className="border border-gray-200 rounded-xl p-5 bg-slate-50/50 flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
@@ -1288,7 +1284,7 @@ const LoginScreen = ({ onLogin, members, admins }) => {
           <div className="w-16 h-16 bg-white/10 rounded-2xl mx-auto flex items-center justify-center mb-4 backdrop-blur-sm border border-white/20">
             <Dumbbell size={32} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">GymManager AI</h1>
+          <h1 className="text-2xl font-bold tracking-tight">GymManager</h1>
           <p className="text-indigo-200 text-sm mt-1">Ingresa con DNI (Socio) o Usuario (Admin)</p>
         </div>
 
@@ -1401,14 +1397,17 @@ export default function App() {
   useEffect(() => { localStorage.setItem('gym_member_plans', JSON.stringify(plans)); }, [plans]);
 
   if (!user) {
-    return <LoginScreen members={members} admins={admins} onLogin={(userData) => { setUser(userData); setActiveTab('dashboard'); }} />;
+    return <LoginScreen members={members} admins={admins} onLogin={(userData) => { 
+      setUser(userData); 
+      setActiveTab(userData.role === 'admin' ? 'dashboard' : 'members'); 
+    }} />;
   }
 
   const allNavItems = [
-    { id: 'dashboard', label: 'Panel', icon: LayoutDashboard, roles: ['admin', 'member'] },
+    { id: 'dashboard', label: 'Panel', icon: LayoutDashboard, roles: ['admin'] },
     { id: 'members', label: 'Gestión de Socios', icon: Users, roles: ['admin', 'member'] },
     { id: 'payments', label: 'Cuenta Corriente', icon: CreditCard, roles: ['admin', 'member'] },
-    { id: 'exercises', label: 'Ejercicios', icon: Activity, roles: ['admin', 'member'] },
+    { id: 'exercises', label: 'Ejercicios', icon: Activity, roles: ['admin'] },
     { id: 'plans', label: 'Planes', icon: Dumbbell, roles: ['admin', 'member'] },
     { id: 'settings', label: 'Ajustes Admin', icon: Settings, roles: ['admin'] },
   ];
@@ -1461,7 +1460,7 @@ export default function App() {
           <div className="bg-indigo-500 p-2 rounded-lg">
             <Dumbbell size={24} className="text-white" />
           </div>
-          <span className="text-xl font-bold tracking-tight">GymManager AI</span>
+          <span className="text-xl font-bold tracking-tight">GymManager</span>
         </div>
 
         <nav className="flex-1 px-4 py-6 space-y-2">
