@@ -31,14 +31,15 @@ import {
   ChevronLeft,
   CheckSquare
 } from 'lucide-react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, doc, setDoc, onSnapshot, collection } from 'firebase/firestore';
 
 const INITIAL_MEMBERS = [
   { id: 1, firstName: 'Juan', lastName: 'Pérez', dni: '38123456', phone: '+54 9 351 1234567', birthday: '1995-05-12', status: 'Activo', joinDate: '2026-01-15', lastVisit: 'Hoy, 08:30 AM' },
   { id: 2, firstName: 'María', lastName: 'Gómez', dni: '40765432', phone: '+54 9 351 7654321', birthday: '1998-08-22', status: 'Activo', joinDate: '2026-02-01', lastVisit: 'Ayer, 18:45 PM' },
   { id: 3, firstName: 'Carlos', lastName: 'Rodríguez', dni: '35555666', phone: '+54 9 351 5556666', birthday: '1990-11-04', status: 'Inactivo', joinDate: '2025-11-20', lastVisit: 'Hace 2 semanas' },
 ];
-
-const INITIAL_LEDGER = {};
 
 const INITIAL_EXERCISES = [
   { id: 1, name: 'Press de Banca con barra', muscle: 'Pecho', description: 'Ejercicio compuesto para pectoral, tríceps y hombro anterior. Acuéstate en el banco, toma la barra con separación mayor a los hombros y baja de forma controlada hasta el pecho.', iconType: 'bench' },
@@ -143,7 +144,7 @@ const DashboardView = ({ members, ledger }) => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Panel de Control</h2>
         <div className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg text-sm font-medium border border-indigo-100 flex items-center gap-2">
-          <Activity size={16} /> Sistema Activo
+          <Activity size={16} /> Nube Sincronizada
         </div>
       </div>
 
@@ -225,7 +226,7 @@ const DashboardView = ({ members, ledger }) => {
   );
 };
 
-const MembersView = ({ members, setMembers, currentUser }) => {
+const MembersView = ({ members, updateMembers, currentUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingMemberId, setEditingMemberId] = useState(null);
@@ -281,7 +282,8 @@ const MembersView = ({ members, setMembers, currentUser }) => {
     if (currentUser.role !== 'admin') return;
     
     if (editingMemberId) {
-      setMembers(members.map(m => m.id === editingMemberId ? { ...m, ...memberForm } : m));
+      const updated = members.map(m => m.id === editingMemberId ? { ...m, ...memberForm } : m);
+      updateMembers(updated);
     } else {
       if (members.some(m => m.dni === memberForm.dni.trim())) {
         alert('Ya existe un socio registrado con este DNI.');
@@ -292,7 +294,7 @@ const MembersView = ({ members, setMembers, currentUser }) => {
         id: members.length > 0 ? Math.max(...members.map(m => m.id)) + 1 : 1,
         lastVisit: 'Nunca'
       };
-      setMembers([...members, newMember]);
+      updateMembers([...members, newMember]);
     }
     
     setShowAddModal(false);
@@ -301,7 +303,7 @@ const MembersView = ({ members, setMembers, currentUser }) => {
   const handleDelete = (id) => {
     if (currentUser.role !== 'admin') return;
     if(window.confirm('¿Estás seguro de eliminar este socio?')) {
-      setMembers(members.filter(m => m.id !== id));
+      updateMembers(members.filter(m => m.id !== id));
     }
   };
 
@@ -489,7 +491,7 @@ const MembersView = ({ members, setMembers, currentUser }) => {
   );
 };
 
-const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
+const CurrentAccountView = ({ members, ledger, updateLedger, currentUser }) => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   
   const initialMemberId = currentUser.role === 'admin' 
@@ -574,7 +576,7 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
         note: novedadForm.note
       }
     };
-    setLedger(updatedLedger);
+    updateLedger(updatedLedger);
     setShowNovedadModal(false);
   };
 
@@ -585,7 +587,7 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
           <h2 className="text-2xl font-bold text-gray-800">
             {currentUser.role === 'admin' ? 'Cuenta Corriente - Calendario Anual' : 'Mi Cuenta Corriente'}
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">Control de cuotas mensuales y estado financiero.</p>
+          <p className="text-sm text-gray-500 mt-0.5">Control de cuotas mensuales y estado financiero en la nube.</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -644,7 +646,6 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
                 </div>
               </div>
 
-              {/* Resumen de Deuda Acumulada */}
               <div className="bg-red-50 border border-red-200 p-4 rounded-xl flex items-center justify-between">
                 <div>
                   <p className="text-xs text-red-600 font-semibold uppercase tracking-wider">Deuda Acumulada Total ({selectedYear})</p>
@@ -787,7 +788,7 @@ const CurrentAccountView = ({ members, ledger, setLedger, currentUser }) => {
   );
 };
 
-const ExercisesView = ({ exercises, setExercises, currentUser }) => {
+const ExercisesView = ({ exercises, updateExercises, currentUser }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newEx, setNewEx] = useState({ name: '', muscle: '', description: '', iconType: 'bench' });
 
@@ -798,7 +799,7 @@ const ExercisesView = ({ exercises, setExercises, currentUser }) => {
       id: exercises.length > 0 ? Math.max(...exercises.map(e => e.id)) + 1 : 1,
       ...newEx
     };
-    setExercises([...exercises, item]);
+    updateExercises([...exercises, item]);
     setShowAddModal(false);
     setNewEx({ name: '', muscle: '', description: '', iconType: 'bench' });
   };
@@ -806,7 +807,7 @@ const ExercisesView = ({ exercises, setExercises, currentUser }) => {
   const handleDelete = (id) => {
     if (currentUser.role !== 'admin') return;
     if (window.confirm('¿Eliminar este ejercicio de la base de datos?')) {
-      setExercises(exercises.filter(e => e.id !== id));
+      updateExercises(exercises.filter(e => e.id !== id));
     }
   };
 
@@ -900,7 +901,7 @@ const ExercisesView = ({ exercises, setExercises, currentUser }) => {
   );
 };
 
-const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
+const PlansView = ({ members, exercises, plans, updatePlans, currentUser }) => {
   const initialDni = currentUser.role === 'admin' ? (members[0]?.dni || '') : currentUser.dni;
   const [selectedDni, setSelectedDni] = useState(initialDni);
 
@@ -909,9 +910,8 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
   const [selectedExId, setSelectedExId] = useState(exercises[0]?.id || 1);
   const [seriesReps, setSeriesReps] = useState('4 x 10');
 
-  // Interactive Workout Runner State
   const [workoutModalOpen, setWorkoutModalOpen] = useState(false);
-  const [activeWorkoutDay, setActiveWorkoutDay] = useState(null); // 'day1' or 'day2'
+  const [activeWorkoutDay, setActiveWorkoutDay] = useState(null);
   const [currentExIndex, setCurrentExIndex] = useState(0);
 
   const effectiveDni = currentUser.role === 'admin' ? selectedDni : currentUser.dni;
@@ -932,7 +932,7 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
       memberPlan.day2 = [...memberPlan.day2, newEntry];
     }
 
-    setPlans({ ...plans, [dni]: memberPlan });
+    updatePlans({ ...plans, [dni]: memberPlan });
     setShowAddExModal(false);
     setSeriesReps('4 x 10');
   };
@@ -946,7 +946,7 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
     } else {
       memberPlan.day2 = memberPlan.day2.filter((_, i) => i !== index);
     }
-    setPlans({ ...plans, [dni]: memberPlan });
+    updatePlans({ ...plans, [dni]: memberPlan });
   };
 
   const startWorkout = (dayKey) => {
@@ -969,7 +969,7 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Planes de Entrenamiento (Día 1 y Día 2)</h2>
-          <p className="text-sm text-gray-500">Rutinas de musculación asignadas por DNI de socio.</p>
+          <p className="text-sm text-gray-500">Rutinas de musculación asignadas por DNI de socio en la nube.</p>
         </div>
       </div>
 
@@ -1020,7 +1020,6 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* DÍA 1 */}
                 <div className="border border-gray-200 rounded-xl p-5 bg-slate-50/50 flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
@@ -1076,7 +1075,6 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
                   </div>
                 </div>
 
-                {/* DÍA 2 */}
                 <div className="border border-gray-200 rounded-xl p-5 bg-slate-50/50 flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-200">
@@ -1170,7 +1168,7 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
               </div>
 
               <div className="pt-4 flex justify-end gap-3">
-                <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 text-gray-600 text-sm font-medium">Cancelar</button>
+                <button type="button" onClick={() => setShowAddExModal(false)} className="px-4 py-2 text-gray-600 text-sm font-medium">Cancelar</button>
                 <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium">Agregar a Rutina</button>
               </div>
             </form>
@@ -1178,7 +1176,6 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
         </div>
       )}
 
-      {/* Workout Runner Modal */}
       {workoutModalOpen && currentWorkoutItem && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col">
@@ -1249,7 +1246,7 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
   );
 };
 
-const SettingsView = ({ admins, setAdmins }) => {
+const SettingsView = ({ admins, updateAdmins }) => {
   const [showNewAdminModal, setShowNewAdminModal] = useState(false);
   const [newAdmin, setNewAdmin] = useState({ name: '', username: '', password: '' });
 
@@ -1259,7 +1256,7 @@ const SettingsView = ({ admins, setAdmins }) => {
       alert('Este usuario ya existe.');
       return;
     }
-    setAdmins([...admins, { id: admins.length + 1, ...newAdmin }]);
+    updateAdmins([...admins, { id: admins.length + 1, ...newAdmin }]);
     setShowNewAdminModal(false);
     setNewAdmin({ name: '', username: '', password: '' });
   };
@@ -1270,7 +1267,7 @@ const SettingsView = ({ admins, setAdmins }) => {
       return;
     }
     if (window.confirm('¿Estás seguro de eliminar este administrador?')) {
-      setAdmins(admins.filter(a => a.id !== id));
+      updateAdmins(admins.filter(a => a.id !== id));
     }
   };
 
@@ -1290,7 +1287,7 @@ const SettingsView = ({ admins, setAdmins }) => {
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-6">
         <div>
           <h3 className="text-lg font-bold text-gray-800 mb-2">Administradores Autorizados</h3>
-          <p className="text-sm text-gray-500 mb-4">Estos usuarios tienen acceso completo a la gestión del gimnasio, control de socios y finanzas.</p>
+          <p className="text-sm text-gray-500 mb-4">Estos usuarios tienen acceso completo a la gestión del gimnasio y se sincronizan en la nube.</p>
           
           <div className="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden">
             {admins.map((admin) => (
@@ -1392,8 +1389,8 @@ const LoginScreen = ({ onLogin, members, admins }) => {
           <div className="w-16 h-16 bg-white/10 rounded-2xl mx-auto flex items-center justify-center mb-4 backdrop-blur-sm border border-white/20">
             <Dumbbell size={32} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">GymManager</h1>
-          <p className="text-indigo-200 text-sm mt-1">Ingresa con DNI (Socio) o Usuario (Admin)</p>
+          <h1 className="text-2xl font-bold tracking-tight">GymManager Cloud</h1>
+          <p className="text-indigo-200 text-sm mt-1">Sincronizado PC y Celular en tiempo real</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-5">
@@ -1470,73 +1467,91 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
-  const [members, setMembers] = useState(() => {
-    try {
-      const saved = localStorage.getItem('gym_members');
-      return saved ? JSON.parse(saved) : INITIAL_MEMBERS;
-    } catch (e) {
-      return INITIAL_MEMBERS;
-    }
-  });
 
-  const [ledger, setLedger] = useState(() => {
-    try {
-      const saved = localStorage.getItem('gym_ledger');
-      return saved ? JSON.parse(saved) : INITIAL_LEDGER;
-    } catch (e) {
-      return INITIAL_LEDGER;
-    }
-  });
+  const [members, setMembers] = useState(INITIAL_MEMBERS);
+  const [ledger, setLedger] = useState({});
+  const [admins, setAdmins] = useState([{ id: 1, name: 'Admin Principal', username: 'admin', password: '123456' }]);
+  const [exercises, setExercises] = useState(INITIAL_EXERCISES);
+  const [plans, setPlans] = useState(INITIAL_PLANS);
+  const [loadingCloud, setLoadingCloud] = useState(true);
 
-  const [admins, setAdmins] = useState(() => {
-    try {
-      const saved = localStorage.getItem('gym_admins');
-      return saved ? JSON.parse(saved) : [
-        { id: 1, name: 'Admin Principal', username: 'admin', password: '123456' }
-      ];
-    } catch (e) {
-      return [{ id: 1, name: 'Admin Principal', username: 'admin', password: '123456' }];
-    }
-  });
+  // Inicialización de Firebase
+  const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const appId = typeof __app_id !== 'undefined' ? __app_id : 'gym-manager-cloud';
 
-  const [exercises, setExercises] = useState(() => {
-    try {
-      const saved = localStorage.getItem('gym_exercises');
-      return saved ? JSON.parse(saved) : INITIAL_EXERCISES;
-    } catch (e) {
-      return INITIAL_EXERCISES;
-    }
-  });
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (e) {
+        console.error("Auth error:", e);
+      }
+    };
+    initAuth();
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      if (u) {
+        // Cargar datos en tiempo real de Firestore
+        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'gym_database');
+        const unsubDoc = onSnapshot(docRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.members) setMembers(data.members);
+            if (data.ledger) setLedger(data.ledger);
+            if (data.admins) setAdmins(data.admins);
+            if (data.exercises) setExercises(data.exercises);
+            if (data.plans) setPlans(data.plans);
+          } else {
+            // Guardar datos iniciales si no existen
+            setDoc(docRef, {
+              members: INITIAL_MEMBERS,
+              ledger: {},
+              admins: [{ id: 1, name: 'Admin Principal', username: 'admin', password: '123456' }],
+              exercises: INITIAL_EXERCISES,
+              plans: INITIAL_PLANS
+            });
+          }
+          setLoadingCloud(false);
+        }, (error) => {
+          console.error("Firestore error:", error);
+          setLoadingCloud(false);
+        });
+        return () => unsubDoc();
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
-  const [plans, setPlans] = useState(() => {
+  const updateCloudData = async (newData) => {
     try {
-      const saved = localStorage.getItem('gym_member_plans');
-      return saved ? JSON.parse(saved) : INITIAL_PLANS;
+      const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'gym_database');
+      await setDoc(docRef, {
+        members,
+        ledger,
+        admins,
+        exercises,
+        plans,
+        ...newData
+      }, { merge: true });
     } catch (e) {
-      return INITIAL_PLANS;
+      console.error("Error saving to cloud:", e);
     }
-  });
+  };
 
-  useEffect(() => { 
-    try { localStorage.setItem('gym_members', JSON.stringify(members)); } catch(e){}
-  }, [members]);
-  
-  useEffect(() => { 
-    try { localStorage.setItem('gym_ledger', JSON.stringify(ledger)); } catch(e){}
-  }, [ledger]);
-  
-  useEffect(() => { 
-    try { localStorage.setItem('gym_admins', JSON.stringify(admins)); } catch(e){}
-  }, [admins]);
-  
-  useEffect(() => { 
-    try { localStorage.setItem('gym_exercises', JSON.stringify(exercises)); } catch(e){}
-  }, [exercises]);
-  
-  useEffect(() => { 
-    try { localStorage.setItem('gym_member_plans', JSON.stringify(plans)); } catch(e){}
-  }, [plans]);
+  if (loadingCloud) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white space-y-4">
+        <Dumbbell size={48} className="animate-bounce text-indigo-500" />
+        <p className="text-sm font-medium tracking-wide">Conectando con la base de datos en la nube...</p>
+      </div>
+    );
+  }
 
   if (!user) {
     return <LoginScreen members={members} admins={admins} onLogin={(userData) => { 
@@ -1570,11 +1585,11 @@ export default function App() {
 
     switch (activeTab) {
       case 'dashboard': return <DashboardView members={members} ledger={ledger} />;
-      case 'members': return <MembersView members={members} setMembers={setMembers} currentUser={user} />;
-      case 'payments': return <CurrentAccountView members={members} ledger={ledger} setLedger={setLedger} currentUser={user} />;
-      case 'exercises': return <ExercisesView exercises={exercises} setExercises={setExercises} currentUser={user} />;
-      case 'plans': return <PlansView members={members} exercises={exercises} plans={plans} setPlans={setPlans} currentUser={user} />;
-      case 'settings': return <SettingsView admins={admins} setAdmins={setAdmins} />;
+      case 'members': return <MembersView members={members} updateMembers={(newM) => { setMembers(newM); updateCloudData({ members: newM }); }} currentUser={user} />;
+      case 'payments': return <CurrentAccountView members={members} ledger={ledger} updateLedger={(newL) => { setLedger(newL); updateCloudData({ ledger: newL }); }} currentUser={user} />;
+      case 'exercises': return <ExercisesView exercises={exercises} updateExercises={(newE) => { setExercises(newE); updateCloudData({ exercises: newE }); }} currentUser={user} />;
+      case 'plans': return <PlansView members={members} exercises={exercises} plans={plans} updatePlans={(newP) => { setPlans(newP); updateCloudData({ plans: newP }); }} currentUser={user} />;
+      case 'settings': return <SettingsView admins={admins} updateAdmins={(newA) => { setAdmins(newA); updateCloudData({ admins: newA }); }} />;
       default: return (
         <div className="flex flex-col items-center justify-center h-64 text-gray-400">
           <Settings size={48} className="mb-4 opacity-50" />
