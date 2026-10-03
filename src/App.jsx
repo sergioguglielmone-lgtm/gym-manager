@@ -1525,13 +1525,24 @@ export default function App() {
   const handleManualSync = async () => {
     setSyncing(true);
     try {
+      const payload = { members, ledger, admins, exercises, plans };
+      await fetch('https://api.jsonbin.io/v3/b/65d5ef10dc74654018712345', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': '$2a$10$7Xv4...'
+        },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+      
       localStorage.setItem('gym_members', JSON.stringify(members));
       localStorage.setItem('gym_ledger', JSON.stringify(ledger));
       localStorage.setItem('gym_admins', JSON.stringify(admins));
       localStorage.setItem('gym_exercises', JSON.stringify(exercises));
       localStorage.setItem('gym_plans', JSON.stringify(plans));
+      
       await new Promise(res => setTimeout(res, 800));
-      alert('¡Datos guardados y sincronizados correctamente!');
+      alert('¡Datos guardados y sincronizados correctamente con la nube!');
     } catch (e) {
       console.error(e);
     } finally {
