@@ -1472,37 +1472,71 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   const [members, setMembers] = useState(() => {
-    const saved = localStorage.getItem('gym_members');
-    return saved ? JSON.parse(saved) : INITIAL_MEMBERS;
+    try {
+      const saved = localStorage.getItem('gym_members');
+      return saved ? JSON.parse(saved) : INITIAL_MEMBERS;
+    } catch (e) {
+      return INITIAL_MEMBERS;
+    }
   });
 
   const [ledger, setLedger] = useState(() => {
-    const saved = localStorage.getItem('gym_ledger');
-    return saved ? JSON.parse(saved) : INITIAL_LEDGER;
+    try {
+      const saved = localStorage.getItem('gym_ledger');
+      return saved ? JSON.parse(saved) : INITIAL_LEDGER;
+    } catch (e) {
+      return INITIAL_LEDGER;
+    }
   });
 
   const [admins, setAdmins] = useState(() => {
-    const saved = localStorage.getItem('gym_admins');
-    return saved ? JSON.parse(saved) : [
-      { id: 1, name: 'Admin Principal', username: 'admin', password: '123456' }
-    ];
+    try {
+      const saved = localStorage.getItem('gym_admins');
+      return saved ? JSON.parse(saved) : [
+        { id: 1, name: 'Admin Principal', username: 'admin', password: '123456' }
+      ];
+    } catch (e) {
+      return [{ id: 1, name: 'Admin Principal', username: 'admin', password: '123456' }];
+    }
   });
 
   const [exercises, setExercises] = useState(() => {
-    const saved = localStorage.getItem('gym_exercises');
-    return saved ? JSON.parse(saved) : INITIAL_EXERCISES;
+    try {
+      const saved = localStorage.getItem('gym_exercises');
+      return saved ? JSON.parse(saved) : INITIAL_EXERCISES;
+    } catch (e) {
+      return INITIAL_EXERCISES;
+    }
   });
 
   const [plans, setPlans] = useState(() => {
-    const saved = localStorage.getItem('gym_member_plans');
-    return saved ? JSON.parse(saved) : INITIAL_PLANS;
+    try {
+      const saved = localStorage.getItem('gym_member_plans');
+      return saved ? JSON.parse(saved) : INITIAL_PLANS;
+    } catch (e) {
+      return INITIAL_PLANS;
+    }
   });
 
-  useEffect(() => { localStorage.setItem('gym_members', JSON.stringify(members)); }, [members]);
-  useEffect(() => { localStorage.setItem('gym_ledger', JSON.stringify(ledger)); }, [ledger]);
-  useEffect(() => { localStorage.setItem('gym_admins', JSON.stringify(admins)); }, [admins]);
-  useEffect(() => { localStorage.setItem('gym_exercises', JSON.stringify(exercises)); }, [exercises]);
-  useEffect(() => { localStorage.setItem('gym_member_plans', JSON.stringify(plans)); }, [plans]);
+  useEffect(() => { 
+    try { localStorage.setItem('gym_members', JSON.stringify(members)); } catch(e){}
+  }, [members]);
+  
+  useEffect(() => { 
+    try { localStorage.setItem('gym_ledger', JSON.stringify(ledger)); } catch(e){}
+  }, [ledger]);
+  
+  useEffect(() => { 
+    try { localStorage.setItem('gym_admins', JSON.stringify(admins)); } catch(e){}
+  }, [admins]);
+  
+  useEffect(() => { 
+    try { localStorage.setItem('gym_exercises', JSON.stringify(exercises)); } catch(e){}
+  }, [exercises]);
+  
+  useEffect(() => { 
+    try { localStorage.setItem('gym_member_plans', JSON.stringify(plans)); } catch(e){}
+  }, [plans]);
 
   if (!user) {
     return <LoginScreen members={members} admins={admins} onLogin={(userData) => { 
