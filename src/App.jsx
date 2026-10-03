@@ -25,7 +25,11 @@ import {
   Cake,
   DollarSign,
   Check,
-  AlertCircle
+  AlertCircle,
+  Play,
+  ChevronRight,
+  ChevronLeft,
+  CheckSquare
 } from 'lucide-react';
 
 const INITIAL_MEMBERS = [
@@ -37,16 +41,16 @@ const INITIAL_MEMBERS = [
 const INITIAL_LEDGER = {};
 
 const INITIAL_EXERCISES = [
-  { id: 1, name: 'Press de Banca con barra', muscle: 'Pecho', description: 'Ejercicio compuesto para pectoral, tríceps y hombro anterior.', iconType: 'bench' },
-  { id: 2, name: 'Apertura Plana con mancuernas', muscle: 'Pecho', description: 'Aislamiento para el desarrollo de la parte media del pectoral.', iconType: 'chest' },
-  { id: 3, name: 'Sentadilla con barra', muscle: 'Piernas', description: 'El ejercicio rey para cuádriceps, glúteos y core.', iconType: 'squat' },
-  { id: 4, name: 'Peso Muerto rumano', muscle: 'Isquiotibiales/Espalda', description: 'Fortalecimiento de cadena posterior, glúteos e lumbares.', iconType: 'deadlift' },
-  { id: 5, name: 'Dominadas en barra', muscle: 'Espalda', description: 'Tracción vertical para dorsal ancho y bíceps.', iconType: 'pullup' },
-  { id: 6, name: 'Remo con barra', muscle: 'Espalda', description: 'Remo inclinado para espesor de espalda alta y dorsal.', iconType: 'row' },
-  { id: 7, name: 'Press militar con barra', muscle: 'Hombros', description: 'Desarrollo de deltoides frontal, lateral y estabilidad.', iconType: 'shoulder' },
-  { id: 8, name: 'Curl de bíceps con mancuernas', muscle: 'Bíceps', description: 'Flexión de codo para hipertrofia de bíceps braquial.', iconType: 'biceps' },
-  { id: 9, name: 'Extensiones de tríceps en polea', muscle: 'Tríceps', description: 'Aislamiento para tríceps utilizando polea alta.', iconType: 'triceps' },
-  { id: 10, name: 'Elevaciones laterales', muscle: 'Hombros', description: 'Aislamiento para deltoides lateral (amplitud de hombros).', iconType: 'lateral' },
+  { id: 1, name: 'Press de Banca con barra', muscle: 'Pecho', description: 'Ejercicio compuesto para pectoral, tríceps y hombro anterior. Acuéstate en el banco, toma la barra con separación mayor a los hombros y baja de forma controlada hasta el pecho.', iconType: 'bench' },
+  { id: 2, name: 'Apertura Plana con mancuernas', muscle: 'Pecho', description: 'Aislamiento para el desarrollo del pectoral. Acostado, abre los brazos con ligera flexión de codo y contrae al subir.', iconType: 'chest' },
+  { id: 3, name: 'Sentadilla con barra', muscle: 'Piernas', description: 'El ejercicio rey para cuádriceps, glúteos y core. Mantén la espalda recta y baja la cadera hacia atrás.', iconType: 'squat' },
+  { id: 4, name: 'Peso Muerto rumano', muscle: 'Isquiotibiales/Espalda', description: 'Fortalecimiento de cadena posterior. Flexión ligera de rodillas y empuje de cadera hacia atrás.', iconType: 'deadlift' },
+  { id: 5, name: 'Dominadas en barra', muscle: 'Espalda', description: 'Tracción vertical para dorsal ancho y bíceps. Eleva el pecho hacia la barra.', iconType: 'pullup' },
+  { id: 6, name: 'Remo con barra', muscle: 'Espalda', description: 'Remo inclinado con torso a 45 grados para espesor de espalda alta.', iconType: 'row' },
+  { id: 7, name: 'Press militar con barra', muscle: 'Hombros', description: 'Desarrollo de deltoides frontal y lateral de pie o sentado.', iconType: 'shoulder' },
+  { id: 8, name: 'Curl de bíceps con mancuernas', muscle: 'Bíceps', description: 'Flexión de codo alternada para hipertrofia de bíceps.', iconType: 'biceps' },
+  { id: 9, name: 'Extensiones de tríceps en polea', muscle: 'Tríceps', description: 'Aislamiento para tríceps utilizando cuerda o barra en polea alta.', iconType: 'triceps' },
+  { id: 10, name: 'Elevaciones laterales', muscle: 'Hombros', description: 'Aislamiento para deltoides lateral, eleva las mancuernas hasta la altura de los hombros.', iconType: 'lateral' },
 ];
 
 const INITIAL_PLANS = {
@@ -80,40 +84,40 @@ const MONTHS = [
 
 const ExerciseVisual = ({ type }) => {
   return (
-    <div className="w-16 h-16 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 shadow-xs relative overflow-hidden group">
+    <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 shadow-sm relative overflow-hidden group">
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex items-center justify-center">
         {type === 'bench' && (
-          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12h16M6 12v5M18 12v5M2 9h20M7 7h10"/></svg>
+          <svg className="w-12 h-12 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M6 12v6M18 12v6M2 8h20M7 6h10"/></svg>
         )}
         {type === 'chest' && (
-          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+          <svg className="w-12 h-12 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/></svg>
         )}
         {type === 'squat' && (
-          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 4h12M9 4v16M15 4v16M5 10h14"/></svg>
+          <svg className="w-12 h-12 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 3h14M8 3v18M16 3v18M4 9h16"/></svg>
         )}
         {type === 'deadlift' && (
-          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 18h20M5 18V9M19 18V9M8 6h8"/></svg>
+          <svg className="w-12 h-12 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 19h20M6 19V8M18 19V8M7 5h10"/></svg>
         )}
         {type === 'pullup' && (
-          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 5h18M7 5v12a2 2 0 002 2h6a2 2 0 002-2V5"/></svg>
+          <svg className="w-12 h-12 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 4h20M7 4v14a2 2 0 002 2h6a2 2 0 002-2V4"/></svg>
         )}
         {type === 'row' && (
-          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1M6 9h12"/></svg>
+          <svg className="w-12 h-12 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 14s2-2 6-2 6 3 9 3 3-2 3-2M5 8h14"/></svg>
         )}
         {type === 'shoulder' && (
-          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21v-4a6.5 6.5 0 0113 0v4"/></svg>
+          <svg className="w-12 h-12 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="6" r="3"/><path d="M4 20v-3a5 5 0 0110 0v3M14 17h6"/></svg>
         )}
         {type === 'biceps' && (
-          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 15l6-6 6 6M12 9v11"/></svg>
+          <svg className="w-12 h-12 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 16l7-7 7 7M12 7v13"/></svg>
         )}
         {type === 'triceps' && (
-          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v18M8 7h8"/></svg>
+          <svg className="w-12 h-12 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M7 6h10"/></svg>
         )}
         {type === 'lateral' && (
-          <svg className="w-10 h-10 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 12h20M12 2v20"/></svg>
+          <svg className="w-12 h-12 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 12h20M12 3v18"/></svg>
         )}
         {(!type || type === 'default') && (
-          <Dumbbell size={28} className="animate-pulse text-indigo-600" />
+          <Dumbbell size={32} className="animate-pulse text-indigo-600" />
         )}
       </div>
     </div>
@@ -831,7 +835,7 @@ const ExercisesView = ({ exercises, setExercises, currentUser }) => {
               <div className="flex-1">
                 <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 mb-1">{ex.muscle}</span>
                 <h3 className="font-bold text-gray-800 text-base">{ex.name}</h3>
-                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{ex.description}</p>
+                <p className="text-xs text-gray-500 mt-1 line-clamp-3">{ex.description}</p>
               </div>
             </div>
 
@@ -905,6 +909,11 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
   const [selectedExId, setSelectedExId] = useState(exercises[0]?.id || 1);
   const [seriesReps, setSeriesReps] = useState('4 x 10');
 
+  // Interactive Workout Runner State
+  const [workoutModalOpen, setWorkoutModalOpen] = useState(false);
+  const [activeWorkoutDay, setActiveWorkoutDay] = useState(null); // 'day1' or 'day2'
+  const [currentExIndex, setCurrentExIndex] = useState(0);
+
   const effectiveDni = currentUser.role === 'admin' ? selectedDni : currentUser.dni;
   const selectedMember = members.find(m => m.dni === effectiveDni) || members[0];
   const currentMemberPlan = plans[effectiveDni] || { day1: [], day2: [] };
@@ -939,6 +948,21 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
     }
     setPlans({ ...plans, [dni]: memberPlan });
   };
+
+  const startWorkout = (dayKey) => {
+    const list = currentMemberPlan[dayKey] || [];
+    if (list.length === 0) {
+      alert('No hay ejercicios programados para este día.');
+      return;
+    }
+    setActiveWorkoutDay(dayKey);
+    setCurrentExIndex(0);
+    setWorkoutModalOpen(true);
+  };
+
+  const activeWorkoutList = activeWorkoutDay ? (currentMemberPlan[activeWorkoutDay] || []) : [];
+  const currentWorkoutItem = activeWorkoutList[currentExIndex];
+  const currentExDetails = currentWorkoutItem ? (exercises.find(e => e.id === currentWorkoutItem.exerciseId) || {}) : {};
 
   return (
     <div className="space-y-6">
@@ -1003,9 +1027,17 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
                       <h4 className="font-extrabold text-indigo-900 text-lg flex items-center gap-2">
                         <Dumbbell size={20} className="text-indigo-600" /> TÍTULO: DÍA 1
                       </h4>
-                      <span className="text-xs bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded-full font-semibold">
-                        {currentMemberPlan.day1?.length || 0} ejercicios
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded-full font-semibold">
+                          {currentMemberPlan.day1?.length || 0} ejer.
+                        </span>
+                        <button 
+                          onClick={() => startWorkout('day1')}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"
+                        >
+                          <Play size={12} /> Iniciar
+                        </button>
+                      </div>
                     </div>
 
                     <div className="space-y-3">
@@ -1051,9 +1083,17 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
                       <h4 className="font-extrabold text-indigo-900 text-lg flex items-center gap-2">
                         <Dumbbell size={20} className="text-indigo-600" /> TÍTULO: DÍA 2
                       </h4>
-                      <span className="text-xs bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded-full font-semibold">
-                        {currentMemberPlan.day2?.length || 0} ejercicios
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded-full font-semibold">
+                          {currentMemberPlan.day2?.length || 0} ejer.
+                        </span>
+                        <button 
+                          onClick={() => startWorkout('day2')}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"
+                        >
+                          <Play size={12} /> Iniciar
+                        </button>
+                      </div>
                     </div>
 
                     <div className="space-y-3">
@@ -1130,10 +1170,78 @@ const PlansView = ({ members, exercises, plans, setPlans, currentUser }) => {
               </div>
 
               <div className="pt-4 flex justify-end gap-3">
-                <button type="button" onClick={() => setShowAddExModal(false)} className="px-4 py-2 text-gray-600 text-sm font-medium">Cancelar</button>
+                <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 text-gray-600 text-sm font-medium">Cancelar</button>
                 <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium">Agregar a Rutina</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Workout Runner Modal */}
+      {workoutModalOpen && currentWorkoutItem && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col">
+            <div className="p-5 bg-indigo-900 text-white flex justify-between items-center">
+              <div>
+                <span className="text-xs uppercase tracking-widest text-indigo-300 font-bold">Modo Entreno • {activeWorkoutDay === 'day1' ? 'Día 1' : 'Día 2'}</span>
+                <h3 className="text-lg font-extrabold">Ejercicio {currentExIndex + 1} de {activeWorkoutList.length}</h3>
+              </div>
+              <button onClick={() => setWorkoutModalOpen(false)} className="text-white/80 hover:text-white">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6 flex-1 flex flex-col items-center text-center">
+              <div className="scale-125 my-4">
+                <ExerciseVisual type={currentExDetails.iconType} />
+              </div>
+
+              <div>
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 mb-2">{currentExDetails.muscle || 'Músculo'}</span>
+                <h4 className="text-2xl font-black text-gray-900">{currentExDetails.name || 'Ejercicio'}</h4>
+                <div className="mt-2 inline-block bg-slate-100 text-slate-800 px-4 py-1.5 rounded-full text-sm font-mono font-bold">
+                  🎯 Series y Reps: {currentWorkoutItem.series}
+                </div>
+              </div>
+
+              <p className="text-sm text-gray-600 bg-gray-50 p-4 rounded-xl border border-gray-100 w-full text-left">
+                <strong>💡 Técnica:</strong> {currentExDetails.description || 'Sin instrucciones adicionales.'}
+              </p>
+            </div>
+
+            <div className="p-5 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+              <button 
+                onClick={() => setCurrentExIndex(prev => Math.max(0, prev - 1))}
+                disabled={currentExIndex === 0}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl text-sm font-bold flex items-center gap-1 disabled:opacity-40 hover:bg-gray-100"
+              >
+                <ChevronLeft size={16} /> Anterior
+              </button>
+
+              <span className="text-xs font-bold text-gray-500 font-mono">
+                {currentExIndex + 1} / {activeWorkoutList.length}
+              </span>
+
+              {currentExIndex < activeWorkoutList.length - 1 ? (
+                <button 
+                  onClick={() => setCurrentExIndex(prev => prev + 1)}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold flex items-center gap-1 shadow-md shadow-indigo-600/30 transition-all"
+                >
+                  Siguiente <ChevronRight size={16} />
+                </button>
+              ) : (
+                <button 
+                  onClick={() => {
+                    alert('¡Excelente trabajo! Has completado tu rutina de hoy.');
+                    setWorkoutModalOpen(false);
+                  }}
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold flex items-center gap-1.5 shadow-md shadow-emerald-600/30 transition-all"
+                >
+                  <CheckSquare size={16} /> Finalizar Rutina
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
