@@ -33,38 +33,22 @@ import {
   RefreshCw
 } from 'lucide-react';
 
-const INITIAL_MEMBERS = [
-  { id: 1, firstName: 'Juan', lastName: 'Pérez', dni: '38123456', phone: '+54 9 351 1234567', birthday: '1995-05-12', status: 'Activo', joinDate: '2026-01-15', lastVisit: 'Hoy, 08:30 AM' },
-  { id: 2, firstName: 'María', lastName: 'Gómez', dni: '40765432', phone: '+54 9 351 7654321', birthday: '1998-08-22', status: 'Activo', joinDate: '2026-02-01', lastVisit: 'Ayer, 18:45 PM' },
-  { id: 3, firstName: 'Carlos', lastName: 'Rodríguez', dni: '35555666', phone: '+54 9 351 5556666', birthday: '1990-11-04', status: 'Inactivo', joinDate: '2025-11-20', lastVisit: 'Hace 2 semanas' },
-];
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously } from 'firebase/auth';
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
-const INITIAL_EXERCISES = [
-  { id: 1, name: 'Press de Banca con barra', muscle: 'Pecho', description: 'Ejercicio compuesto para pectoral, tríceps y hombro anterior. Acuéstate en el banco, toma la barra con separación mayor a los hombros y baja de forma controlada hasta el pecho.', iconType: 'bench' },
-  { id: 2, name: 'Apertura Plana con mancuernas', muscle: 'Pecho', description: 'Aislamiento para el desarrollo del pectoral. Acostado, abre los brazos con ligera flexión de codo y contrae al subir.', iconType: 'chest' },
-  { id: 3, name: 'Sentadilla con barra', muscle: 'Piernas', description: 'El ejercicio rey para cuádriceps, glúteos y core. Mantén la espalda recta y baja la cadera hacia atrás.', iconType: 'squat' },
-  { id: 4, name: 'Peso Muerto rumano', muscle: 'Isquiotibiales/Espalda', description: 'Fortalecimiento de cadena posterior. Flexión ligera de rodillas y empuje de cadera hacia atrás.', iconType: 'deadlift' },
-  { id: 5, name: 'Dominadas en barra', muscle: 'Espalda', description: 'Tracción vertical para dorsal ancho y bíceps. Eleva el pecho hacia la barra.', iconType: 'pullup' },
-  { id: 6, name: 'Remo con barra', muscle: 'Espalda', description: 'Remo inclinado con torso a 45 grados para espesor de espalda alta.', iconType: 'row' },
-  { id: 7, name: 'Press militar con barra', muscle: 'Hombros', description: 'Desarrollo de deltoides frontal y lateral de pie o sentado.', iconType: 'shoulder' },
-  { id: 8, name: 'Curl de bíceps con mancuernas', muscle: 'Bíceps', description: 'Flexión de codo alternada para hipertrofia de bíceps.', iconType: 'biceps' },
-  { id: 9, name: 'Extensiones de tríceps en polea', muscle: 'Tríceps', description: 'Aislamiento para tríceps utilizando cuerda o barra en polea alta.', iconType: 'triceps' },
-  { id: 10, name: 'Elevaciones laterales', muscle: 'Hombros', description: 'Aislamiento para deltoides lateral, eleva las mancuernas hasta la altura de los hombros.', iconType: 'lateral' },
-];
-
-const INITIAL_PLANS = {
-  "38123456": {
-    day1: [
-      { exerciseId: 1, series: '4 x 10' },
-      { exerciseId: 2, series: '3 x 12' },
-      { exerciseId: 9, series: '3 x 15' }
-    ],
-    day2: [
-      { exerciseId: 3, series: '4 x 8' },
-      { exerciseId: 4, series: '3 x 10' }
-    ]
-  }
+const firebaseConfig = {
+  apiKey: "AIzaSyA3rxi7mq85JwuWRToJTAs7tno_rXzb-Zs",
+  authDomain: "gym-manager-638f6.firebaseapp.com",
+  projectId: "gym-manager-638f6",
+  storageBucket: "gym-manager-638f6.firebasestorage.app",
+  messagingSenderId: "273913685020",
+  appId: "1:273913685020:web:4022da787f027a89026bd9"
 };
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 const MONTHS = [
   { number: 1, name: 'Enero' },
