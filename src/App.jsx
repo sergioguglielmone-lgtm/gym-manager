@@ -34,8 +34,8 @@ import {
 } from 'lucide-react';
 
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+"import { getAuth, signInAnonymously } from 'firebase/auth';"
+"import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';"
 
 const firebaseConfig = {
   apiKey: "AIzaSyA3rxi7mq85JwuWRToJTAs7tno_rXzb-Zs",
