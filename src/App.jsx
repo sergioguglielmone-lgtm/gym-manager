@@ -50,7 +50,145 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-const MONTHS = [
+export default function App() {
+  // --- ESTADOS DE AUTENTICACIÓN ---
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [user, setUser] = useState(null);
+  const [loginError, setLoginError] = useState('');
+
+  // --- ESTADOS DE SOCIOS ---
+  const [socios, setSocios] = useState([]);
+  const [nuevoNombreSocio, setNuevoNombreSocio] = useState('');
+
+  // Detectar si el usuario está logueado
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  // Cargar socios en tiempo real desde Firestore
+  useEffect(() => {
+    const unsubscribeSocios = onSnapshot(collection(db, "socios"), (snapshot) => {
+      const listaSocios = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setSocios(listaSocios);
+    }, (error) => {
+      console.error("Error al leer socios:", error);
+    });
+
+    return () => unsubscribeSocios();
+  }, []);
+
+  // Función de Login
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginError('');
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      console.error(err);
+      setLoginError('Credenciales incorrectas.');
+    }
+  };
+
+  // Función Logout
+  const handleLogout = async () => {
+    await signOut(auth);
+  };
+
+  // Función Alta de Socio (Solo Admin por reglas de Firestore)
+  const handleAgregarSocio = async (e) => {
+    e.preventDefault();
+    if (!nuevoNombreSocio.trim()) return;
+
+    try {
+      await addDoc(collection(db, "socios"), {
+        nombre: nuevoNombreSocio,
+        fechaRegistro: new Date()
+      });
+      setNuevoNombreSocio('');
+    } catch (error) {
+      console.error("Error al agregar socio:", error);
+      alert("No tienes permisos de administrador para realizar esta acción.");
+    }
+  };
+
+  // Variable para verificar si eres tú
+  const isAdmin = user && user.email === "sergioguglielmone@gmail.com";
+
+return (
+    <div style={{ padding: '20px', fontFamily: 'Arial' }}>
+      <h1>GymManager - Módulo de Socios</h1>
+
+      {/* Si NO hay usuario, mostramos el Login */}
+      {!user ? (
+        <div style={{ maxWidth: '300px', background: '#f5f5f5', padding: '15px', borderRadius: '8px' }}>
+          <h3>Iniciar Sesión Admin</h3>
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <input 
+              type="email" 
+              placeholder="Correo" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              required 
+            />
+            <input 
+              type="password" 
+              placeholder="Contraseña" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              required 
+            />
+            <button type="submit">Entrar</button>
+          </form>
+          {loginError && <p style={{ color: 'red', fontSize: '13px' }}>{loginError}</p>}
+        </div>
+      ) : (
+        /* Si SÍ hay usuario, mostramos la sesión y el panel */
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#e6f7ff', padding: '10px', borderRadius: '5px' }}>
+            <span>Conectado como: <strong>{user.email}</strong></span>
+            <button onClick={handleLogout} style={{ background: '#ff4d4d', color: 'white', border: 'none', padding: '5px 10px', cursor: 'pointer' }}>Cerrar Sesión</button>
+          </div>
+
+          {/* Si es Admin ve el formulario de Alta */}
+          {isAdmin && (
+            <div style={{ marginTop: '15px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }}>
+              <h4>➕ Dar de Alta Nuevo Socio (Solo Admin)</h4>
+              <form onSubmit={handleAgregarSocio} style={{ display: 'flex', gap: '8px' }}>
+                <input 
+                  type="text" 
+                  placeholder="Nombre del socio" 
+                  value={nuevoNombreSocio} 
+                  onChange={(e) => setNuevoNombreSocio(e.target.value)} 
+                  required 
+                />
+                <button type="submit">Guardar Socio</button>
+              </form>
+            </div>
+          )}
+
+          {/* Listado de Socios (Visible para socios y admin) */}
+          <div style={{ marginTop: '20px' }}>
+            <h3>📋 Lista de Socios Registrados</h3>
+            <ul>
+              {socios.map(socio => (
+                <li key={socio.id}>{socio.nombre}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+  const MONTHS = [
   { number: 1, name: 'Enero' },
   { number: 2, name: 'Febrero' },
   { number: 3, name: 'Marzo' },
